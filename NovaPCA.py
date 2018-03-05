@@ -113,7 +113,59 @@ class NovaPCA:
 #     minwvl/maxwvl -- wavelength cutoffs for loading the spectra.
 
     def loadSNID(self, loadTypes, phaseType, loadPhase, loadPhaseRangeWidth, minwvl, maxwvl):
+        """
+ Method to load SNID spectra of the types specified in loadTypes. 
+ Arguments:
+     loadTypes -- list of 2tuples specifying which SNe types to load.
+                  See SNID structure at end of this docstring.
+                  Ex) >>> loadTypes = [(1,2), (2,2), (3,2)] loads Ia-norm, Ib-norm, and Ic-norm.
+     phaseType -- int, either 0 for phases measured relative to max light, or 1 
+                  for phases measured relative to first observation.
+     loadPhase -- float, what phase you want to load the nearest observed spectra of for each SNe.
+     loadPhaseRangeWidth -- float, width of phase range you want to allow, ie phase = 15 +/- 5 days.
+     minwvl/maxwvl -- wavelength cutoffs for loading the spectra.
 
+SNID Type Structure:
+
+#* SN Ia
+#      typename(1,1) = 'Ia'      ! first element is name of type
+#      typename(1,2) = 'Ia-norm' ! subtypes follow...(normal, peculiar, etc.)
+#      typename(1,3) = 'Ia-91T'
+#      typename(1,4) = 'Ia-91bg'
+#      typename(1,5) = 'Ia-csm'
+#      typename(1,6) = 'Ia-pec'
+#      typename(1,7) = 'Ia-99aa'
+#      typename(1,8) = 'Ia-02cx'
+
+#* SN Ib      
+#      typename(2,1) = 'Ib'
+#      typename(2,2) = 'Ib-norm'
+#      typename(2,3) = 'Ib-pec'
+#      typename(2,4) = 'IIb'     ! IIb is not included in SNII
+#      typename(2,5) = 'Ib-n'    ! Ib-n can be regarded as a kind of Ib-pec 
+
+#* SN Ic
+#      typename(3,1) = 'Ic'
+#      typename(3,2) = 'Ic-norm'
+#      typename(3,3) = 'Ic-pec'
+#      typename(3,4) = 'Ic-broad'
+
+#* SN II
+#      typename(4,1) = 'II'
+#      typename(4,2) = 'IIP'     ! IIP is the "normal" SN II
+#      typename(4,3) = 'II-pec'
+#      typename(4,4) = 'IIn'
+#      typename(4,5) = 'IIL'
+
+#* NotSN
+#      typename(5,1) = 'NotSN'
+#      typename(5,2) = 'AGN'
+#      typename(5,3) = 'Gal'
+#      typename(5,4) = 'LBV'
+#      typename(5,5) = 'M-star'
+#      typename(5,6) = 'QSO'
+#      typename(5,7) = 'C-star'
+        """
         self.loadPhase = loadPhase
         self.phaseWidth = loadPhaseRangeWidth
         self.minwvl = minwvl
@@ -199,7 +251,9 @@ class NovaPCA:
 # a plot of the smoothed vs unsmoothed spectra for verification.
 
     def smoothIcBL(self):
-
+        """
+This method smoothes the IcBL spectra because they are noisier than the other types. It uses the IDL code SNspecFFTsmooth.pro from the nyusngroup public git repository: https://github.com/nyusngroup/SESNspectraLib. Smoothing is done using cut_vel = 3000 km/s as recommended by the authors for IcBL. This method replaces the noisy IcBL spectra loaded from SNID and stored in self.spectraMatrix with the smoothed spectra outputted by the IDL code.
+        """
         IcBLMask = np.array([np.array_equal(arr, np.array([3,4])) for arr in self.sneTypes])
         idl = pidly.IDL()
         idl('.COMPILE type default lmfit linear_fit powerlaw_fit integ binspec SNspecFFTsmooth')
@@ -271,6 +325,9 @@ class NovaPCA:
 # Preprocessing replaces 0.0 values with NaN. It also removes the mean of each spectrum
 # and scales each spectrum to have unitary std.
     def preprocess(self):
+        """
+Preprocessing replaces flux values of 0.0 with NaN. It also removes the mean of each spectrum and scales each spectrum to have standard deviation = 1.
+        """
         for i in range(self.spectraMatrix.shape[0]):
             self.spectraMatrix[i][self.spectraMatrix[i] == 0] = np.nan
         spectraMean = np.nanmean(self.spectraMatrix, axis=1)
@@ -284,6 +341,12 @@ class NovaPCA:
 
 
     def wavelengthRebin(self, smoothing):
+        """
+Rebins wavelength to have lower resolution. Wavelength is in logspace.
+Arguments:
+    smoothing -- Number of wavelength bins to combine by averaging
+Example: If there are 100 wavelength bins in logspace, then setting smoothing = 2 will split the original 100 bins into 50 new bins of length 2 original bins each, then calculate a flux for the new larger bin by averaging the original flux bins. 
+        """
         nrows, ncols = self.spectraMatrix.shape
         tmp = np.reshape(self.spectraMatrix, (nrows, ncols/smoothing, smoothing))
         self.spectraMatrix = np.nanmean(tmp, axis=2)
@@ -298,6 +361,13 @@ class NovaPCA:
 # method first copies the original NovaPCA instance before applying the mask
 # and returns the old instance to the user.
     def applyMask(self, mask, doc, savecopy=False):
+        """
+This method takes a user specified mask, and applies it to all the maskable attributes of a NovaPCA instance. If the user sets savecopy=True, then this method first makes a deep copy of the original NovaPCA instance before applying the mask, and returns the preMasked instance to the user.
+Arguments:
+    mask -- Numpy boolean array.
+    doc -- Documentation string for the mask that is being applied.
+    savecopy -- Boolean, whether to save the preMasked NovaPCA object.
+        """
         self.maskDocs.append(doc)
         if savecopy:
             preMask = copy.deepcopy(self)
@@ -311,6 +381,9 @@ class NovaPCA:
 
 # The save method pickles the NovaPCA object.
     def save(self, filename):
+        """
+The save method pickles the NovaPCA object.
+        """
         f = open(filename, 'wb')
         pickle.dump(self, f)
         f.close()
@@ -318,6 +391,9 @@ class NovaPCA:
 
 # The load method loads a saved pickle file.
     def load(self, filename):
+        """
+Loads a pickled NovaPCA object. Prints all of the applied mask doc strings so that the user is informed as to which masks have already been applied to the object.
+        """
         f = open(filename, 'rb')
         loadSelf = pickle.load(f)
         f.close()
@@ -329,6 +405,9 @@ class NovaPCA:
 
 # Calculate PCA decomposition
     def calculatePCA(self):
+        """
+Calculates the PCA decomposition. PCA coefficients are stored in NovaPCA.pcaCoeffMatrix, but the sklearn PCA() object is also stored in case the user wants to experiment. This is accessible in NovaPCA.sklearnPCA attribute.
+        """
         pca = PCA()
         pca.fit(self.spectraMatrix)
         self.sklearnPCA = pca
@@ -341,6 +420,9 @@ class NovaPCA:
 # Plot TSNE embedding
 
     def plotTSNE(self, nPCAComponents):
+        """
+Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
+        """
         f = plt.figure()
         model = TSNE(n_components=2, random_state=0)
         tsneSpec = model.fit_transform(self.pcaCoeffMatrix[:,0:nPCAComponents])
@@ -359,6 +441,12 @@ class NovaPCA:
 # Plot 2D Corner plot of PCA components
 
     def cornerplotPCA(self, ncomp, figsize):
+        """
+Plots the 2D marginalizations of the PCA decomposition in a corner plot.
+Arguments:
+    ncomp -- Number of PCA components to include in the 2D marginalization. It is best to ignore the high order components that only capture noise.
+    figsize -- Size of the figure.
+        """
         red_patch = mpatches.Patch(color='red', label='Ic')
         cyan_patch = mpatches.Patch(color='cyan', label='Ib')
         black_patch = mpatches.Patch(color='black', label='IcBL Smoothed')
@@ -417,6 +505,12 @@ class NovaPCA:
 # Plot reconstructed spectra
 
     def reconstructSpectra(self, nrecon, nPCAComponents):
+        """
+Reconstructs spectra using the PCA decomposition.
+Arguments:
+    nrecon -- Number of randomly chosen spectra to reconstruct.
+    nPCAComponents -- Iterable list of numbers of PCA components to try using for the reconstruction.
+        """
         randomSpec = np.random.randint(0,self.spectraMatrix.shape[0], nrecon)
         #randomSpec = np.where(self.sneNames == 'sn2004gt')[0]
 
@@ -467,6 +561,12 @@ class NovaPCA:
 # Plot eigenspectra
 
     def plotEigenspectra(self, figsize, nshow):
+        """
+Plots the eigenspectra calculated by PCA.
+Arguments:
+    figsize -- Size of the figure.
+    nshow -- Number of eigenspectra to show in figure. The high order PCA components are noise.
+        """
         f = plt.figure(figsize=figsize)
         for i, ev in enumerate(self.evecs[:nshow]):
             plt.subplot(nshow, 1, i + 1)
@@ -482,6 +582,12 @@ class NovaPCA:
 # Plot spectra
 
     def plotSpectra(self, figsize, alpha):
+        """
+Plots the spectra stored in NovaPCA.spectraMatrix attribute.
+Arguments:
+    figsize -- Size of figure.
+    alpha -- Matplotlib alpha parameter.
+        """
         f = plt.figure(figsize=figsize)
         for i, spec in enumerate(self.spectraMatrix):
             if not i % 10:
