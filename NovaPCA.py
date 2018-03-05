@@ -83,6 +83,7 @@ class NovaPCA:
         self.spectraMean = None
         self.spectraStd = None
         
+        self.maskDocs = []
         self.maskAttributes = ['spectraMatrix','pcaCoeffMatrix','obsSNIDPhases','sneNames','sneTypes',\
                               'skiprows', 'phaseCols', 'spectraMean', 'spectraStd']
 
@@ -296,7 +297,8 @@ class NovaPCA:
 # attributes of a NovaPCA instance. If the user sets savecopy=True, then this 
 # method first copies the original NovaPCA instance before applying the mask
 # and returns the old instance to the user.
-    def applyMask(self, mask, savecopy=False):
+    def applyMask(self, mask, doc, savecopy=False):
+        self.maskDocs.append(doc)
         if savecopy:
             preMask = copy.deepcopy(self)
         for attr in self.maskAttributes:
@@ -319,6 +321,10 @@ class NovaPCA:
         f = open(filename, 'rb')
         loadSelf = pickle.load(f)
         f.close()
+        for doc in loadSelf.maskDocs:
+            print "Applied Mask: "
+            print doc
+            print ''
         return loadSelf
 
 # Calculate PCA decomposition
