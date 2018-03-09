@@ -250,23 +250,23 @@ SNID Type Structure:
 # This Method smooths the broadline Ic spectra and outputs
 # a plot of the smoothed vs unsmoothed spectra for verification.
 
-    def smoothIcBL(self):
+    def smoothIcBL(self, smoothMask, vel_cut):
         """
 This method smoothes the IcBL spectra because they are noisier than the other types. It uses the IDL code SNspecFFTsmooth.pro from the nyusngroup public git repository: https://github.com/nyusngroup/SESNspectraLib. Smoothing is done using cut_vel = 3000 km/s as recommended by the authors for IcBL. This method replaces the noisy IcBL spectra loaded from SNID and stored in self.spectraMatrix with the smoothed spectra outputted by the IDL code.
         """
-        IcBLMask = np.array([np.array_equal(arr, np.array([3,4])) for arr in self.sneTypes])
+        #IcBLMask = np.array([np.array_equal(arr, np.array([3,4])) for arr in self.sneTypes])
         idl = pidly.IDL()
         idl('.COMPILE type default lmfit linear_fit powerlaw_fit integ binspec SNspecFFTsmooth')
         IcBLSmoothedMatrix = []
         IcBLPreSmooth = []
         IcBLPreSmoothIDL = []
         
-        for i in range(len(IcBLMask[IcBLMask == True])):
-            specName = self.sneNames[IcBLMask][i]
+        for i in range(len(smoothMask[smoothMask == True])):
+            specName = self.sneNames[smoothMask][i]
             print specName
             specPath = self.snidDirPath + specName +'.lnw'
-            skiprow = self.skiprows[IcBLMask][i]
-            usecol = self.phaseCols[IcBLMask][i] + 1 # add 1 because SNID file has a wavelength column
+            skiprow = self.skiprows[smoothMask][i]
+            usecol = self.phaseCols[smoothMask][i] + 1 # add 1 because SNID file has a wavelength column
             s = np.loadtxt(specPath, skiprows=skiprow, usecols=(0,usecol))
             if i==0:
                 IcBLWvl = s[:,0]
@@ -275,7 +275,9 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                     f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+10.0))
                 f.close()
             idl('readcol, "tmp_spec.txt", w, f')
-            idl('SNspecFFTsmooth, w, f, 3000, f_ft, f_std, sep_vel')
+            idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut)+', f_ft, f_std, sep_vel'
+            idl(idlCmd)
+           #idl('SNspecFFTsmooth, w, f, 3000, f_ft, f_std, sep_vel')
             IcBLPreSmooth.append(s[:,1])
             IcBLSmoothedMatrix.append(idl.f_ft)
             IcBLPreSmoothIDL.append(idl.f)
@@ -301,7 +303,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         nshow = IcBLSmoothedMatrix.shape[0]
         for i in range(nshow):
             plt.subplot(nshow, 1, i + 1)
-            name = self.sneNames[IcBLMask][i]
+            name = self.sneNames[smoothMask][i]
             plt.plot(IcBLWvl, IcBLSmoothedMatrix[i], label='smoothed '+name, color='k')
             plt.plot(IcBLWvl, IcBLPreSmooth[i], label='pre smoothed '+name, color='r')
             if i == 0:
@@ -310,7 +312,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                 plt.xlabel('Wavelength (Angstroms)')
             plt.ylabel('Rel Flux')
             plt.legend(fontsize=12)
-        for i, sn in enumerate(self.sneNames[IcBLMask]):
+        for i, sn in enumerate(self.sneNames[smoothMask]):
             print sn
             smoothSpec = IcBLSmoothedMatrix[i]
             mask = np.logical_and(IcBLWvl > self.minwvl, IcBLWvl < self.maxwvl)
@@ -515,7 +517,7 @@ Arguments:
         #randomSpec = np.where(self.sneNames == 'sn2004gt')[0]
 
         self.sampleMean = np.nanmean(self.spectraMatrix, axis=0)
-        
+        plt.clf()
         for j, spec in enumerate(randomSpec):
             specName = self.sneNames[spec]
             trueSpec = self.spectraMatrix[spec]
