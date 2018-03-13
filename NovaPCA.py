@@ -371,7 +371,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                 IcBLWvl = s[:,0]
             with open('tmp_spec.txt', 'w') as f:
                 for j in range(s.shape[0]):
-                    f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+10.0))
+                    f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+0.0))
                 f.close()
             idl('readcol, "tmp_spec.txt", w, f')
             idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut)+', f_ft, f_std, sep_vel'
