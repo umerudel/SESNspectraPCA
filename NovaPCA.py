@@ -4,6 +4,7 @@
 
 import numpy as np
 import scipy
+from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import scipy.stats as st
 import matplotlib.pyplot as plt
@@ -141,6 +142,65 @@ def smooth(wvl, flux, cut_vel):
 
 
 
+def findGaps(specAllWvl, wavelengths, minwvl, maxwvl):
+    wvlMask = np.logical_and(wavelengths > minwvl, wavelengths < maxwvl)
+    spec = specAllWvl[wvlMask]
+    longestGap = 0
+    endGap = False
+    startGap = False
+    whereNan = np.where(np.isnan(spec))[0]
+    if len(whereNan) == 0:
+        return 0, False, False
+    if whereNan[0] == 0:
+        startGap = True
+    if whereNan[-1] == len(spec)-1:
+        endGap = True
+
+    gapL = -1
+    for i, ind in enumerate(whereNan):
+        if i==0:
+            gapL = 1
+        else:
+            oldInd = whereNan[i-1]
+            if oldInd == ind-1:
+                gapL = gapL +1
+            else:
+                if gapL > longestGap:
+                    longestGap = gapL
+                gapL = 1
+
+    return longestGap, startGap, endGap
+
+def findGapLength(wvl, wavelengths, specAllWvl, direction):
+    wvlind = np.where(wavelengths == wvl)[0][0]
+    fluxfinite = np.where(np.isfinite(specAllWvl))[0]
+    if wvlind in fluxfinite:
+        return 0, wvl
+    gapEndIndArr = np.where(fluxfinite > wvlind)[0]
+    if len(gapEndIndArr) == 0:
+        gapEndInd = len(wavelengths)
+    else:
+        gapEndInd = fluxfinite[gapEndIndArr[0]]
+
+    gapStartIndArr = np.where(fluxfinite < wvlind)[0]
+    if len(gapStartIndArr) == 0:
+        gapStartInd = -1
+    else:
+        gapStartInd = fluxfinite[gapStartIndArr[-1]]
+    gapLength = gapEndInd - gapStartInd + 1 - 2
+
+    if direction=='left':
+        if gapStartInd == -1:
+            returnWvl = -1
+        else:
+            returnWvl = wavelengths[gapStartInd]
+    if direction=='right':
+        if gapEndInd == len(wavelengths):
+            returnWvl = -1
+        else:
+            returnWvl = wavelengths[gapEndInd]
+    return gapLength, returnWvl
+
 
 class NovaPCA:
 
@@ -186,7 +246,7 @@ class NovaPCA:
 #     loadPhaseRangeWidth -- float, width of phase range you want to allow, ie phase = 15 +/- 5 days.
 #     minwvl/maxwvl -- wavelength cutoffs for loading the spectra.
 
-    def loadSNID(self, loadTypes, phaseType, loadPhase, loadPhaseRangeWidth, minwvl, maxwvl):
+    def loadSNID(self, loadTypes, phaseType, loadPhase, loadPhaseRangeWidth, minwvl, maxwvl, gap):
         """
  Method to load SNID spectra of the types specified in loadTypes. 
  Arguments:
@@ -286,13 +346,17 @@ SNID Type Structure:
         phaseCols, phaseArr = findClosestObsPhase(phases, loadPhase)
         
         spectra = []
+        spectraInterp = []
         for i in range(len(snePaths)):
             spec = snePaths[i]
             skiprow = skiprows[i]
             s = np.loadtxt(spec, skiprows=skiprow, usecols=(0,phaseCols[i] + 1)) #Note the +1 becase in the SNID files there is a column (0) for wvl
-            mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
-            s = s[mask]
+            #mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
+            
+            #s = s[mask]
+            #spectra.append(s[mask])
             spectra.append(s)
+            
 
         wavelengths = np.array(spectra[0][:,0])
         specMat = np.ndarray((len(spectra), spectra[0].shape[0]))
@@ -343,6 +407,66 @@ SNID Type Structure:
                 self.spectraMatrix[i] = fsmooth
 
         return f
+
+
+
+
+    def spectraGaps(self, maxGapLength):
+        gapMask = []
+        for spec in self.spectraMatrix:
+            spec[spec == 0] = np.nan
+            longestGap, startGap, endGap = findGaps(spec, self.wavelengths, self.minwvl, self.maxwvl)
+            print startGap, endGap
+            if longestGap > maxGapLength:
+                gapMask.append(False)
+            else:
+                startWvl = self.wavelengths[np.where(self.wavelengths > self.minwvl)[0][0]]
+                endWvl = self.wavelengths[np.where(self.wavelengths < self.maxwvl)[0][-1]]
+                startGapLength, startfiniteWvl = findGapLength(startWvl, self.wavelengths, spec, 'left')
+                endGapLength, endfiniteWvl = findGapLength(endWvl, self.wavelengths, spec, 'right')
+                if startGapLength > maxGapLength or endGapLength > maxGapLength:
+                    gapMask.append(False)
+                else:
+                    gapMask.append(True)
+        gapMask = np.array(gapMask)
+        self.applyMask(gapMask, "Removed spectra with gaps longer than %d wavelength bins,\
+                                 and spectra with gaps at the beginning or end."%(maxGapLength))
+
+        wvlMask = np.logical_and(self.wavelengths > self.minwvl, self.wavelengths < self.maxwvl)
+        filtWavelengths = self.wavelengths[wvlMask]
+        filtSpectraMatrix = np.ndarray((self.spectraMatrix.shape[0], len(filtWavelengths)))
+
+
+        return
+
+    def interpSpec(self):
+
+        wvlMask = np.logical_and(self.wavelengths > self.minwvl, self.wavelengths < self.maxwvl)
+        filtWavelengths = self.wavelengths[wvlMask]
+        #print filtWavelengths
+        filtSpectraMatrix = np.ndarray((self.spectraMatrix.shape[0], len(filtWavelengths)))
+
+        for i,spec in enumerate(self.spectraMatrix):
+            startWvl = self.wavelengths[np.where(self.wavelengths > self.minwvl)[0][0]]
+            endWvl = self.wavelengths[np.where(self.wavelengths < self.maxwvl)[0][-1]]
+            #print startWvl, endWvl
+
+            startGapLength, startfiniteWvl = findGapLength(startWvl, self.wavelengths, spec, 'left')
+            endGapLength, endfiniteWvl = findGapLength(endWvl, self.wavelengths, spec, 'right')
+            print startfiniteWvl, endfiniteWvl
+
+            wvlMask = np.logical_and(self.wavelengths >= startfiniteWvl, self.wavelengths <= endfiniteWvl)
+            finiteMask = np.isfinite(spec)
+            mask = np.logical_and(wvlMask, finiteMask)
+            interp_fn = interp1d(self.wavelengths[mask], spec[mask])
+            #print filtWavelengths[0], filtWavelengths[-1]
+            #print spec[0], spec[-1]
+            filtSpectraMatrix[i] = interp_fn(filtWavelengths)
+        self.wavelengths = filtWavelengths
+        self.spectraMatrix = filtSpectraMatrix
+        return
+
+
 
 
 
@@ -536,6 +660,57 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
         plt.title('TSNE Projection from PCA')
         plt.xlabel('TSNE Component 0')
         plt.ylabel('TSNE Component 1')
+        return f
+
+
+
+    def pcaPlot(self, pcax, pcay, figsize):
+        f = plt.figure(figsize=figsize)
+        red_patch = mpatches.Patch(color='red', label='Ic')
+        cyan_patch = mpatches.Patch(color='cyan', label='Ib')
+        black_patch = mpatches.Patch(color='black', label='IcBL Smoothed')
+        green_patch = mpatches.Patch(color='green', label='IIb')
+
+        IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
+
+        x = self.pcaCoeffMatrix[:,pcax]
+        y = self.pcaCoeffMatrix[:,pcay]
+
+        #centroids
+        IIbxmean = np.mean(x[IIbMask])
+        IIbymean = np.mean(y[IIbMask])
+        Ibxmean = np.mean(x[IbMask])
+        Ibymean = np.mean(y[IbMask])
+        Icxmean = np.mean(x[IcMask])
+        Icymean = np.mean(y[IcMask])
+        IcBLxmean = np.mean(x[IcBLMask])
+        IcBLymean = np.mean(y[IcBLMask])
+        plt.scatter(IIbxmean, IIbymean, color='g', alpha=0.5, s=100)
+        plt.scatter(Ibxmean, Ibymean, color='c', alpha=0.5, s=100)
+        plt.scatter(Icxmean, Icymean, color='r', alpha=0.5, s=100)
+        plt.scatter(IcBLxmean, IcBLymean, color='k', alpha=0.5, s=100)
+
+        plt.scatter(x[IIbMask], y[IIbMask], color='g', alpha=1)
+        plt.scatter(x[IbMask], y[IbMask], color='c', alpha=1)
+        plt.scatter(x[IcMask], y[IcMask], color='r', alpha=1)
+        plt.scatter(x[IcBLMask], y[IcBLMask], color='k', alpha=1)
+        #for i, name in enumerate(self.sneNames[IcBLMask]):
+        #    plt.text(x[IcBLMask][i], y[IcBLMask][i], name)
+
+        plt.xlim((np.min(x)-2,np.max(x)+2))
+        plt.ylim((np.min(y)-2,np.max(y)+2))
+
+        plt.ylabel('PCA Comp %d'%(pcay),fontsize=20)
+        plt.xlabel('PCA Comp %d'%(pcax), fontsize=20)
+#        plt.axis('off')
+        plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
+        plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
+        plt.minorticks_on()
+        plt.tick_params(
+                    axis='both',          # changes apply to the x-axis
+                    which='both',      # both major and minor ticks are affected
+                    labelsize=20) # labels along the bottom edge are off
+
         return f
 
 
