@@ -1,7 +1,8 @@
 # Class written to run PCA analysis on SNID supernova spectra.
 # Author: Marc Williamson
 # Date created: 3/01/2018
-
+#import matplotlib
+#matplotlib.use('Agg')
 import numpy as np
 import scipy
 from scipy.interpolate import interp1d
@@ -108,8 +109,9 @@ def smooth(wvl, flux, cut_vel):
     powerlaw = lambda x, amp, exp: amp*x**exp
     
     #do linear regression on log data to obtain a guess for powerlaw parameters
-    xdat = freq[num_lower:num_upper]
-    ydat = np.abs(fbin_ft[num_lower:num_upper])
+    nup = len(freq[num_lower:]/2.0)
+    xdat = freq[num_lower:nup]
+    ydat = np.abs(fbin_ft[num_lower:nup])
     nonzero_mask = xdat!=0            
     slope, intercept, _,_,_ = st.linregress(np.log(xdat[nonzero_mask]), np.log(ydat[nonzero_mask]))
     exp_guess = slope
