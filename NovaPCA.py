@@ -386,18 +386,22 @@ SNID Type Structure:
         return
 
 
-    def smoothSpectra(self, mask, vel_cut, figsize):
+    def smoothSpectra(self, mask, vel_cut, figsize, idlspec=None):
+        sepvels = []
         f = plt.figure(figsize=figsize)
         nshow = np.sum(mask)
         plotcounter = 1
         for i in range(len(mask)):
             if mask[i]:
-                wsmooth, fsmooth, sepvel = smooth(self.wavelengths, self.spectraMatrix[i], vel_cut)
+                wsmooth, fsmooth, sepvel = smooth(self.wavelengths, self.spectraMatrix[i], vel_cut[i])
+                sepvels.append(sepvel)
                 plt.subplot(nshow, 1, plotcounter)
                 plotcounter = plotcounter + 1
                 name = self.sneNames[i]
                 plt.plot(self.wavelengths, self.spectraMatrix[i], label='pre-smoothed '+name, color='r')
                 plt.plot(self.wavelengths, fsmooth, label='smoothed sep_vel = '+str(sepvel), color='k')
+                if not idlspec is None:
+                    plt.plot(self.wavelengths, idlspec[i], label='idl smoothed', color='c')
                 if i==0:
                     plt.title('Smoothed SNe Spectra %d$\pm$%d'%(self.loadPhase, self.phaseWidth))
                 if i == nshow - 1:
@@ -405,6 +409,7 @@ SNID Type Structure:
                 plt.ylabel('Rel Flux')
                 plt.legend(fontsize=12)
                 self.spectraMatrix[i] = fsmooth
+        self.smoothSepVels = np.array(sepvels)
 
         return f
 
@@ -483,6 +488,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         IcBLSmoothedMatrix = []
         IcBLPreSmooth = []
         IcBLPreSmoothIDL = []
+        sepvels = []
         
         for i in range(len(smoothMask[smoothMask == True])):
             specName = self.sneNames[smoothMask][i]
@@ -498,12 +504,13 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                     f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+0.0))
                 f.close()
             idl('readcol, "tmp_spec.txt", w, f')
-            idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut)+', f_ft, f_std, sep_vel'
+            idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut[i])+', f_ft, f_std, sep_vel'
             idl(idlCmd)
            #idl('SNspecFFTsmooth, w, f, 3000, f_ft, f_std, sep_vel')
             IcBLPreSmooth.append(s[:,1])
             IcBLSmoothedMatrix.append(idl.f_ft)
             IcBLPreSmoothIDL.append(idl.f)
+            sepvels.append(idl.sep_vel)
             
         IcBLPreSmooth = np.array(IcBLPreSmooth)
         IcBLSmoothedMatrix = np.array(IcBLSmoothedMatrix)
@@ -521,6 +528,8 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         originalPreSmoothSpectra = np.copy(IcBLPreSmooth)
         IcBLPreSmoothT = (IcBLPreSmooth.T - preSmoothMean) / preSmoothStd
         IcBLPreSmooth = IcBLPreSmoothT.T
+        
+        smoothspecvec = []
 
         f = plt.figure(figsize=(15,50))
         nshow = IcBLSmoothedMatrix.shape[0]
@@ -541,11 +550,11 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
             mask = np.logical_and(IcBLWvl > self.minwvl, IcBLWvl < self.maxwvl)
             smoothSpec = smoothSpec[mask]
             ind = np.where(self.sneNames == sn)[0][0]
-            self.spectraMatrix[ind] = smoothSpec
+            #self.spectraMatrix[ind] = smoothSpec
+            smoothspecvec.append(smoothSpec)
 
 
-
-        return f
+        return f, np.array(sepvels), np.array(smoothspecvec)
 
 # Preprocessing replaces 0.0 values with NaN. It also removes the mean of each spectrum
 # and scales each spectrum to have unitary std.
@@ -668,7 +677,7 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
         f = plt.figure(figsize=figsize)
         red_patch = mpatches.Patch(color='red', label='Ic')
         cyan_patch = mpatches.Patch(color='cyan', label='Ib')
-        black_patch = mpatches.Patch(color='black', label='IcBL Smoothed')
+        black_patch = mpatches.Patch(color='black', label='IcBL')
         green_patch = mpatches.Patch(color='green', label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
