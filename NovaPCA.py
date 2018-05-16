@@ -9,6 +9,8 @@ from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import scipy.stats as st
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_color_codes('colorblind')
 import sys, os, glob, re, copy
 import sklearn
 from sklearn.decomposition import PCA
@@ -101,7 +103,7 @@ def smooth(wvl, flux, cut_vel):
     num = wvl_ln.shape[0]
     binsize = wvl_ln[-1] - wvl_ln[-2]
     f_bin, wln_bin = binspec(wvl_ln, flux, min(wvl_ln), max(wvl_ln), binsize)
-    fbin_ft = np.fft.fft(f_bin)*len(f_bin)
+    fbin_ft = np.fft.fft(f_bin)#*len(f_bin)
     freq = np.fft.fftfreq(num)
     num_upper = np.max(np.where(1.0/freq[1:] * c_kms * binsize > cut_vel))
     num_lower = np.max(np.where(1.0/freq[1:] * c_kms * binsize > vel_toolarge))
@@ -109,17 +111,23 @@ def smooth(wvl, flux, cut_vel):
     powerlaw = lambda x, amp, exp: amp*x**exp
     
     #do linear regression on log data to obtain a guess for powerlaw parameters
-    nup = len(freq[num_lower:]/2.0)
-    xdat = freq[num_lower:nup]
-    ydat = np.abs(fbin_ft[num_lower:nup])
+    
+    print num_upper
+#    print nup
+    num_bin = len(f_bin)
+    xdat = freq[num_lower:num_upper]
+#    print xdat
+    ydat = np.abs(fbin_ft[num_lower:num_upper])
+#    print ydat
     nonzero_mask = xdat!=0            
     slope, intercept, _,_,_ = st.linregress(np.log(xdat[nonzero_mask]), np.log(ydat[nonzero_mask]))
     exp_guess = slope
     amp_guess = np.exp(intercept)
+#    print slope, intercept
     
     #do powerlaw fit
-    xdat = freq[num_lower:num_upper]
-    ydat = np.abs(fbin_ft[num_lower:num_upper])
+    xdat = freq[num_lower:int(num_bin/2)]
+    ydat = np.abs(fbin_ft[num_lower:int(num_bin/2)])
     #exclude data where x=0 because this can cause 1/0 errors if exp < 0
     finite_mask = np.logical_not(xdat==0)
     finite_mask = np.logical_and(finite_mask, np.isfinite(ydat))
@@ -132,7 +140,7 @@ def smooth(wvl, flux, cut_vel):
     
     #filter out frequencies with velocities higher than sep_vel
     smooth_fbin_ft = np.array([fbin_ft[ind] if np.abs(freq[ind])<np.abs(intersect_x) else 0 \
-                               for ind in range(len(freq))])/len(f_bin)
+                               for ind in range(len(freq))])#/len(f_bin)
     #inverse fft on smoothed fluxes
     smooth_fbin_ft_inv = np.real(np.fft.ifft(smooth_fbin_ft))
     
@@ -353,11 +361,11 @@ SNID Type Structure:
             spec = snePaths[i]
             skiprow = skiprows[i]
             s = np.loadtxt(spec, skiprows=skiprow, usecols=(0,phaseCols[i] + 1)) #Note the +1 becase in the SNID files there is a column (0) for wvl
-            #mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
+            mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
             
             #s = s[mask]
-            #spectra.append(s[mask])
-            spectra.append(s)
+            spectra.append(s[mask])
+            #spectra.append(s)
             
 
         wavelengths = np.array(spectra[0][:,0])
@@ -491,6 +499,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         IcBLPreSmooth = []
         IcBLPreSmoothIDL = []
         sepvels = []
+        sepvels_no_pad = []
         
         for i in range(len(smoothMask[smoothMask == True])):
             specName = self.sneNames[smoothMask][i]
@@ -505,6 +514,14 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                 for j in range(s.shape[0]):
                     f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+0.0))
                 f.close()
+
+            #spec = self.spectraMatrix[smoothMask][i]
+            #with open('tmp_spec_wvlcut.txt', 'w') as f:
+            #    for j in range(len(self.wavelengths)):
+            #        f.write('        %.4f        %.7f\n'%(self.wavelengths[j], spec[j]))
+            #    f.close()
+
+
             idl('readcol, "tmp_spec.txt", w, f')
             idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut[i])+', f_ft, f_std, sep_vel'
             idl(idlCmd)
@@ -514,6 +531,14 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
             IcBLPreSmoothIDL.append(idl.f)
             sepvels.append(idl.sep_vel)
             
+            #idl('readcol, "tmp_spec_wvlcut.txt", w_pad, f_pad')
+            #idlCmd = 'SNspecFFTsmooth, w_pad, f_pad, '+str(vel_cut[i])+', f_ft_pad, f_std_pad, sep_vel_pad'
+            #idl(idlCmd)
+            #sepvels_no_pad.append(idl.sep_vel_pad)
+
+
+
+
         IcBLPreSmooth = np.array(IcBLPreSmooth)
         IcBLSmoothedMatrix = np.array(IcBLSmoothedMatrix)
         IcBLPreSmoothIDL = np.array(IcBLPreSmoothIDL)
@@ -556,7 +581,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
             smoothspecvec.append(smoothSpec)
 
 
-        return f, np.array(sepvels), np.array(smoothspecvec)
+        return f, np.array(sepvels), np.array(smoothspecvec), np.array(sepvels_no_pad)
 
 # Preprocessing replaces 0.0 values with NaN. It also removes the mean of each spectrum
 # and scales each spectrum to have unitary std.
@@ -677,10 +702,10 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
 
     def pcaPlot(self, pcax, pcay, figsize):
         f = plt.figure(figsize=figsize)
-        red_patch = mpatches.Patch(color='red', label='Ic')
-        cyan_patch = mpatches.Patch(color='cyan', label='Ib')
-        black_patch = mpatches.Patch(color='black', label='IcBL')
-        green_patch = mpatches.Patch(color='green', label='IIb')
+        red_patch = mpatches.Patch(color='r', label='Ic')
+        cyan_patch = mpatches.Patch(color='c', label='Ib')
+        black_patch = mpatches.Patch(color='k', label='IcBL')
+        green_patch = mpatches.Patch(color='g', label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
 
@@ -734,10 +759,10 @@ Arguments:
     ncomp -- Number of PCA components to include in the 2D marginalization. It is best to ignore the high order components that only capture noise.
     figsize -- Size of the figure.
         """
-        red_patch = mpatches.Patch(color='red', label='Ic')
-        cyan_patch = mpatches.Patch(color='cyan', label='Ib')
-        black_patch = mpatches.Patch(color='black', label='IcBL Smoothed')
-        green_patch = mpatches.Patch(color='green', label='IIb')
+        red_patch = mpatches.Patch(color='r', label='Ic')
+        cyan_patch = mpatches.Patch(color='c', label='Ib')
+        black_patch = mpatches.Patch(color='k', label='IcBL Smoothed')
+        green_patch = mpatches.Patch(color='g', label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
 
