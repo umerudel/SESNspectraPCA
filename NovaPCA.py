@@ -1,13 +1,15 @@
 # Class written to run PCA analysis on SNID supernova spectra.
 # Author: Marc Williamson
 # Date created: 3/01/2018
-
+from __future__ import division
 import numpy as np
 import scipy
 from scipy.interpolate import interp1d
 import scipy.optimize as opt
 import scipy.stats as st
 import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set_color_codes('colorblind')
 import sys, os, glob, re, copy
 import sklearn
 from sklearn.decomposition import PCA
@@ -16,7 +18,10 @@ import plotly.graph_objs as go
 import plotly.tools as tls
 import pickle
 import matplotlib.patches as mpatches
+import matplotlib.transforms as transforms
+import matplotlib.gridspec as gridspec
 from sklearn.manifold import TSNE
+from scipy.spatial import distance
 
 try:
     import pidly
@@ -217,6 +222,14 @@ class NovaPCA:
         self.spectraMean = None
         self.spectraStd = None
         
+        self.IIb_color = 'g'
+        self.Ib_color = 'mediumorchid'
+        self.Ic_color = 'r'
+        self.IcBL_color = 'k'
+        self.H_color = 'steelblue'
+        self.He_color = 'indianred'
+
+
         self.maskDocs = []
         self.maskAttributes = ['spectraMatrix','pcaCoeffMatrix','obsSNIDPhases','sneNames','sneTypes',\
                               'skiprows', 'phaseCols', 'spectraMean', 'spectraStd']
@@ -319,7 +332,7 @@ SNID Type Structure:
 
         for specName in allSpec:
             path = self.snidDirPath + specName
-            with open(path, 'r') as f:
+            with open(path, self.Ic_color) as f:
                 lines = f.readlines()
                 header = lines[0].split()
                 snType = int(header[-2])
@@ -351,9 +364,9 @@ SNID Type Structure:
             spec = snePaths[i]
             skiprow = skiprows[i]
             s = np.loadtxt(spec, skiprows=skiprow, usecols=(0,phaseCols[i] + 1)) #Note the +1 becase in the SNID files there is a column (0) for wvl
-            #mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
+            mask = np.logical_and(s[:,0] > self.minwvl, s[:,0] < self.maxwvl)
             
-            #s = s[mask]
+            s = s[mask]
             #spectra.append(s[mask])
             spectra.append(s)
             
@@ -386,6 +399,7 @@ SNID Type Structure:
         return
 
 
+
     def smoothSpectra(self, mask, vel_cut, figsize, idlspec=None):
         sepvels = []
         f = plt.figure(figsize=figsize)
@@ -398,10 +412,10 @@ SNID Type Structure:
                 plt.subplot(nshow, 1, plotcounter)
                 plotcounter = plotcounter + 1
                 name = self.sneNames[i]
-                plt.plot(self.wavelengths, self.spectraMatrix[i], label='pre-smoothed '+name, color='r')
-                plt.plot(self.wavelengths, fsmooth, label='smoothed sep_vel = '+str(sepvel), color='k')
+                plt.plot(self.wavelengths, self.spectraMatrix[i], label='pre-smoothed '+name, color=self.Ic_color)
+                plt.plot(self.wavelengths, fsmooth, label='smoothed sep_vel = '+str(sepvel), color=self.IcBL_color)
                 if not idlspec is None:
-                    plt.plot(self.wavelengths, idlspec[i], label='idl smoothed', color='c')
+                    plt.plot(self.wavelengths, idlspec[i], label='idl smoothed', color=self.Ib_color)
                 if i==0:
                     plt.title('Smoothed SNe Spectra %d$\pm$%d'%(self.loadPhase, self.phaseWidth))
                 if i == nshow - 1:
@@ -536,8 +550,8 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         for i in range(nshow):
             plt.subplot(nshow, 1, i + 1)
             name = self.sneNames[smoothMask][i]
-            plt.plot(IcBLWvl, IcBLSmoothedMatrix[i], label='smoothed '+name, color='k')
-            plt.plot(IcBLWvl, IcBLPreSmooth[i], label='pre smoothed '+name, color='r')
+            plt.plot(IcBLWvl, IcBLSmoothedMatrix[i], label='smoothed '+name, color=self.IcBL_color)
+            plt.plot(IcBLWvl, IcBLPreSmooth[i], label='pre smoothed '+name, color=self.Ic_color)
             if i == 0:
                 plt.title('Smoothed IcBL spectra %d$\pm$%d'%(self.loadPhase, self.phaseWidth))
             if i == nshow - 1:
@@ -662,10 +676,10 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
         tsneSpec = model.fit_transform(self.pcaCoeffMatrix[:,0:nPCAComponents])
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
-        plt.scatter(tsneSpec[:,0][IIbMask], tsneSpec[:,1][IIbMask], color='g')
-        plt.scatter(tsneSpec[:,0][IbMask], tsneSpec[:,1][IbMask], color='c')
-        plt.scatter(tsneSpec[:,0][IcMask], tsneSpec[:,1][IcMask], color='r')
-        plt.scatter(tsneSpec[:,0][IcBLMask], tsneSpec[:,1][IcBLMask], color='k')
+        plt.scatter(tsneSpec[:,0][IIbMask], tsneSpec[:,1][IIbMask], color=self.IIb_color)
+        plt.scatter(tsneSpec[:,0][IbMask], tsneSpec[:,1][IbMask], color=self.Ib_color)
+        plt.scatter(tsneSpec[:,0][IcMask], tsneSpec[:,1][IcMask], color=self.Ic_color)
+        plt.scatter(tsneSpec[:,0][IcBLMask], tsneSpec[:,1][IcBLMask], color=self.IcBL_color)
         plt.title('TSNE Projection from PCA')
         plt.xlabel('TSNE Component 0')
         plt.ylabel('TSNE Component 1')
@@ -673,17 +687,18 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
 
 
 
-    def pcaPlot(self, pcax, pcay, figsize):
+    def pcaPlot(self, pcax, pcay, figsize, purity=False, std_rad=None):
         f = plt.figure(figsize=figsize)
-        red_patch = mpatches.Patch(color='red', label='Ic')
-        cyan_patch = mpatches.Patch(color='cyan', label='Ib')
-        black_patch = mpatches.Patch(color='black', label='IcBL')
-        green_patch = mpatches.Patch(color='green', label='IIb')
+        ax = plt.gca()
+        red_patch = mpatches.Patch(color=self.Ic_color, label='Ic')
+        cyan_patch = mpatches.Patch(color=self.Ib_color, label='Ib')
+        black_patch = mpatches.Patch(color=self.IcBL_color, label='IcBL')
+        green_patch = mpatches.Patch(color=self.IIb_color, label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
 
-        x = self.pcaCoeffMatrix[:,pcax]
-        y = self.pcaCoeffMatrix[:,pcay]
+        x = self.pcaCoeffMatrix[:,pcax-1]
+        y = self.pcaCoeffMatrix[:,pcay-1]
 
         #centroids
         IIbxmean = np.mean(x[IIbMask])
@@ -694,15 +709,33 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
         Icymean = np.mean(y[IcMask])
         IcBLxmean = np.mean(x[IcBLMask])
         IcBLymean = np.mean(y[IcBLMask])
-        plt.scatter(IIbxmean, IIbymean, color='g', alpha=0.5, s=100)
-        plt.scatter(Ibxmean, Ibymean, color='c', alpha=0.5, s=100)
-        plt.scatter(Icxmean, Icymean, color='r', alpha=0.5, s=100)
-        plt.scatter(IcBLxmean, IcBLymean, color='k', alpha=0.5, s=100)
+        plt.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5, s=100, marker='x')
+        plt.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5, s=100, marker='x')
+        plt.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5, s=100, marker='x')
+        plt.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5, s=100, marker='x')
 
-        plt.scatter(x[IIbMask], y[IIbMask], color='g', alpha=1)
-        plt.scatter(x[IbMask], y[IbMask], color='c', alpha=1)
-        plt.scatter(x[IcMask], y[IcMask], color='r', alpha=1)
-        plt.scatter(x[IcBLMask], y[IcBLMask], color='k', alpha=1)
+        if purity:
+            ncomp_arr = [pcax, pcay]
+            keys, purity_rad_arr = self.purityEllipse(std_rad, ncomp_arr)
+            IIbrad = purity_rad_arr[0]
+            Ibrad = purity_rad_arr[1]
+            IcBLrad = purity_rad_arr[2]
+            Icrad = purity_rad_arr[3]
+
+            ellipse_IIb = mpatches.Ellipse((IIbxmean, IIbymean),2*IIbrad[0],2*IIbrad[1], color=self.IIb_color, alpha=0.1)
+            ellipse_Ib = mpatches.Ellipse((Ibxmean, Ibymean),2*Ibrad[0],2*Ibrad[1], color=self.Ib_color, alpha=0.1)
+            ellipse_Ic = mpatches.Ellipse((Icxmean, Icymean),2*Icrad[0],2*Icrad[1], color=self.Ic_color, alpha=0.1)
+            ellipse_IcBL = mpatches.Ellipse((IcBLxmean, IcBLymean),2*IcBLrad[0],2*IcBLrad[1], color=self.IcBL_color, alpha=0.1)
+
+            ax.add_patch(ellipse_IIb)
+            ax.add_patch(ellipse_Ib)
+            ax.add_patch(ellipse_Ic)
+            ax.add_patch(ellipse_IcBL)
+
+        plt.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, alpha=1)
+        plt.scatter(x[IbMask], y[IbMask], color=self.Ib_color, alpha=1)
+        plt.scatter(x[IcMask], y[IcMask], color=self.Ic_color, alpha=1)
+        plt.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, alpha=1)
         #for i, name in enumerate(self.sneNames[IcBLMask]):
         #    plt.text(x[IcBLMask][i], y[IcBLMask][i], name)
 
@@ -713,7 +746,7 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
         plt.xlabel('PCA Comp %d'%(pcax), fontsize=20)
 #        plt.axis('off')
         plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
-        plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
+        #plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
         plt.minorticks_on()
         plt.tick_params(
                     axis='both',          # changes apply to the x-axis
@@ -725,6 +758,72 @@ Calculates the TSNE embedding of a PCA decomposition in a 2 dimensional space.
 
 # Plot 2D Corner plot of PCA components
 
+
+    def purityEllipse(self, std_rad, ncomp_array):
+        ncomp_array = np.array(ncomp_array) - 1
+        IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
+        maskDict = {'IIb':IIbMask, 'Ib':IbMask, 'IcBL':IcBLMask, 'Ic':IcMask}
+        keys = ['IIb', 'Ib', 'IcBL', 'Ic']
+        masks = [IIbMask, IbMask, IcBLMask, IcMask]
+        purity_rad_arr = []
+        for key,msk in zip(keys,masks):
+            centroid = np.mean(self.pcaCoeffMatrix[:,ncomp_array][msk], axis=0)
+            print 'centroid', centroid
+            dist_from_centroid = np.abs(self.pcaCoeffMatrix[:,ncomp_array][msk] - centroid)
+            mean_dist_from_centroid = np.mean(dist_from_centroid, axis=0)
+            print 'mean dist from centroid: ', mean_dist_from_centroid
+            std_dist_all_components = np.std(dist_from_centroid, axis=0)
+            print 'std dist from centroid: ', std_dist_all_components
+            purity_rad_all = mean_dist_from_centroid + std_rad * std_dist_all_components
+            print 'purity rad all components: ', purity_rad_all
+            purity_rad_arr.append(purity_rad_all)
+            
+
+            ellipse_cond = np.sum(np.power((self.pcaCoeffMatrix[:,ncomp_array] - centroid), 2)/\
+                                  np.power(purity_rad_all, 2), axis=1)
+            print 'ellipse condition: ', ellipse_cond
+            purity_msk = ellipse_cond < 1
+
+            print key
+            print 'purity radius: ', purity_rad_all
+            print '# of SNe within purity ellipse for type '+key+': ',np.sum(purity_msk)
+            names_within_purity_rad = self.sneNames[purity_msk]
+            correct_names = self.sneNames[msk]
+            correct_msk = np.isin(names_within_purity_rad, correct_names)
+            print '# of correct SNe '+key+': ', np.sum(correct_msk)
+        return keys, purity_rad_arr
+
+
+    def purity(self, std_rad, ncomp_array):
+        IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
+        maskDict = {'IIb':IIbMask, 'Ib':IbMask, 'IcBL':IcBLMask, 'Ic':IcMask}
+        keys = ['IIb', 'Ib', 'IcBL', 'Ic']
+        masks = [IIbMask, IbMask, IcBLMask, IcMask]
+        purity_rad_arr = []
+        for key,msk in zip(keys,masks):
+            mean = np.mean(self.pcaCoeffMatrix[:,ncomp_array][msk], axis=0)
+            d = distance.cdist(self.pcaCoeffMatrix[:,ncomp_array][msk], np.array([mean]), 'euclidean')
+            dstd = np.std(d)
+            dmean = np.mean(d)
+
+            purity_rad = dmean + std_rad * dstd
+            purity_rad_arr.append(purity_rad)
+            d_all = distance.cdist(self.pcaCoeffMatrix[:,ncomp_array], np.array([mean]), 'euclidean')
+            purity_msk = d_all < purity_rad
+            purity_msk = purity_msk.flatten()
+            print key
+            print 'purity radius: ', purity_rad
+            print '# of SNe within purity radius for type '+key+': ',np.sum(purity_msk)
+            names_within_purity_rad = self.sneNames[purity_msk]
+            correct_names = self.sneNames[msk]
+            correct_msk = np.isin(names_within_purity_rad, correct_names)
+            print '# of correct SNe '+key+': ', np.sum(correct_msk)
+        return keys, purity_rad_arr
+
+
+
+
+
     def cornerplotPCA(self, ncomp, figsize):
         """
 Plots the 2D marginalizations of the PCA decomposition in a corner plot.
@@ -732,10 +831,10 @@ Arguments:
     ncomp -- Number of PCA components to include in the 2D marginalization. It is best to ignore the high order components that only capture noise.
     figsize -- Size of the figure.
         """
-        red_patch = mpatches.Patch(color='red', label='Ic')
-        cyan_patch = mpatches.Patch(color='cyan', label='Ib')
-        black_patch = mpatches.Patch(color='black', label='IcBL Smoothed')
-        green_patch = mpatches.Patch(color='green', label='IIb')
+        red_patch = mpatches.Patch(color=self.Ic_color, label='Ic')
+        cyan_patch = mpatches.Patch(color=self.Ib_color, label='Ib')
+        black_patch = mpatches.Patch(color=self.IcBL_color, label='IcBL Smoothed')
+        green_patch = mpatches.Patch(color=self.IIb_color, label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = getSNeTypeMasks(self.sneTypes)
 
@@ -757,23 +856,23 @@ Arguments:
                     Icymean = np.mean(y[IcMask])
                     IcBLxmean = np.mean(x[IcBLMask])
                     IcBLymean = np.mean(y[IcBLMask])
-                    plt.scatter(IIbymean, IIbxmean, color='g', alpha=0.5, s=100)
-                    plt.scatter(Ibymean, Ibxmean, color='c', alpha=0.5, s=100)
-                    plt.scatter(Icymean, Icxmean, color='r', alpha=0.5, s=100)
-                    plt.scatter(IcBLymean, IcBLxmean, color='k', alpha=0.5, s=100)
+                    plt.scatter(IIbymean, IIbxmean, color=self.IIb_color, alpha=0.5, s=100)
+                    plt.scatter(Ibymean, Ibxmean, color=self.Ib_color, alpha=0.5, s=100)
+                    plt.scatter(Icymean, Icxmean, color=self.Ic_color, alpha=0.5, s=100)
+                    plt.scatter(IcBLymean, IcBLxmean, color=self.IcBL_color, alpha=0.5, s=100)
 
-                    plt.scatter(y[IIbMask], x[IIbMask], color='g', alpha=1)
-                    plt.scatter(y[IbMask], x[IbMask], color='c', alpha=1)
-                    plt.scatter(y[IcMask], x[IcMask], color='r', alpha=1)
-                    plt.scatter(y[IcBLMask], x[IcBLMask], color='k', alpha=1)
+                    plt.scatter(y[IIbMask], x[IIbMask], color=self.IIb_color, alpha=1)
+                    plt.scatter(y[IbMask], x[IbMask], color=self.Ib_color, alpha=1)
+                    plt.scatter(y[IcMask], x[IcMask], color=self.Ic_color, alpha=1)
+                    plt.scatter(y[IcBLMask], x[IcBLMask], color=self.IcBL_color, alpha=1)
 
                     plt.xlim((np.min(self.pcaCoeffMatrix[:,j])-2,np.max(self.pcaCoeffMatrix[:,j])+2))
                     plt.ylim((np.min(self.pcaCoeffMatrix[:,i])-2,np.max(self.pcaCoeffMatrix[:,i])+2))
 
                     if j == 0:
-                        plt.ylabel('PCA Comp %d'%(i))
+                        plt.ylabel('PCA Comp %d'%(i+1))
                     if i == ncomp - 1:
-                        plt.xlabel('PCA Comp %d'%(j))
+                        plt.xlabel('PCA Comp %d'%(j+1))
         plt.subplot(5,5,9)#########################################################
         plt.axis('off')
         plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch])
@@ -782,14 +881,166 @@ Arguments:
 
 
 
+    def plotEigenspectraGrid(self, figsize, nshow, ylim=None, fontsize=16):
+        f = plt.figure(figsize=figsize)
+        hostgrid = gridspec.GridSpec(3,1)
+        hostgrid.update(hspace=0.2)
+
+        eiggrid = gridspec.GridSpecFromSubplotSpec(nshow, 1, subplot_spec=hostgrid[:2,0], hspace=0)
+
+        for i, ev in enumerate(self.evecs[:nshow]):
+            ax = plt.subplot(eiggrid[i,0])
+            ax.plot(self.wavelengths, ev, color=self.IcBL_color)
+
+            trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+            ax.text(0.02,0.85, "(PCA%d, %.0f"%(i+1, 100*self.evals_cs[i])+'%)', horizontalalignment='left',\
+                    verticalalignment='center', fontsize=fontsize, transform=trans2)
+            ax.tick_params(axis='both',which='both',labelsize=fontsize)
+            if not ylim is None:
+                ax.set_ylim(ylim)
+            if i > -1:
+                yticks = ax.yaxis.get_major_ticks()
+                yticks[-1].set_visible(False)
+
+            if i == 0:
+                # Balmer lines
+                trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+
+                ax.text(0.02,1.05, "(PCA#, Cum. Var.)", fontsize=fontsize, horizontalalignment='left',\
+                        verticalalignment='center', transform=trans2)
+
+                ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                s = r'$\alpha$'
+                xcord = (6213+6366)/2.0
+                ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center',transform=trans)
+                ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                s = r'$\beta$'
+                xcord = (4602+4715)/2.0
+                ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center',transform=trans)
 
 
+                ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                ax.text((5621+5758)/2.0, 1.05, 'HeI5876', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+                ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                ax.text((6388+6544)/2.0, 1.05, 'HeI6678', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+                ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
+                ax.text((6729+6924)/2.0, 1.05, 'HeI7065', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+            if i > 0:
+                # Balmer lines
+                trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
+
+
+            if i == nshow - 1:
+                ax.set_xlabel("Wavelength", fontsize=fontsize)
+
+        ax = plt.subplot(hostgrid[-1])
+        ax.boxplot(self.pcaCoeffMatrix)
+        ax.set_xlabel('PCA Component #', fontsize=fontsize)
+        ax.set_ylabel('PCA Coefficient Value', fontsize=fontsize)
+        ax.tick_params(axis='both', which='both', labelsize=fontsize)
+        ax.axhline(y=0, color=self.Ic_color)
+        xticklabels = ax.xaxis.get_majorticklabels()
+        xticklabels[0].set_visible
+        for i, tick in enumerate(xticklabels):
+            if i%4 != 0:
+                tick.set_visible(False)
+            
+        #f.text(0.07, 2.0/3.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=16)
+        return f, hostgrid
+
+        
+
+    def plotEigenspectraFinal(self, figsize, nshow, ylim=None, fontsize=16):
+        """
+Plots the eigenspectra calculated by PCA.
+Arguments:
+    figsize -- Size of the figure.
+    nshow -- Number of eigenspectra to show in figure. The high order PCA components are noise.
+        """
+        f = plt.figure(figsize=figsize)
+        plt.tick_params(axis='both', which='both', bottom='off', top='off',\
+                            labelbottom='off', right='off', left='off', labelleft='off')
+        f.subplots_adjust(hspace=0, top=0.95, bottom=0.1, left=0.12, right=0.93)
+        for i, ev in enumerate(self.evecs[:nshow]):
+            ax = f.add_subplot(nshow, 1, 1+i)
+            #ax.plot(self.wavelengths, ev, label="PCA%d, %.0f"%(i, 100*self.evals_cs[i])+'%', color=self.IcBL_color)
+            ax.plot(self.wavelengths, ev, color=self.IcBL_color)
+
+            trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+            ax.text(0.02,0.85, "(PCA%d, %.0f"%(i+1, 100*self.evals_cs[i])+'%)', horizontalalignment='left',\
+                    verticalalignment='center', fontsize=fontsize, transform=trans2)
+            ax.tick_params(axis='both',which='both',labelsize=fontsize)
+            if not ylim is None:
+                ax.set_ylim(ylim)
+            if i > -1:
+                yticks = ax.yaxis.get_major_ticks()
+                yticks[-1].set_visible(False)
+
+            if i == 0:
+                # Balmer lines
+                trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+
+                ax.text(0.02,1.05, "(PCA#, Cum. Var.)", fontsize=fontsize, horizontalalignment='left',\
+                        verticalalignment='center', transform=trans2)
+
+                ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                s = r'$\alpha$'
+                xcord = (6213+6366)/2.0
+                ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center',transform=trans)
+                ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                s = r'$\beta$'
+                xcord = (4602+4715)/2.0
+                ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center',transform=trans)
+
+
+                ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                ax.text((5621+5758)/2.0, 1.05, 'HeI5876', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+                ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                ax.text((6388+6544)/2.0, 1.05, 'HeI6678', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+                ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
+                ax.text((6729+6924)/2.0, 1.05, 'HeI7065', fontsize=fontsize, horizontalalignment='center',\
+                        verticalalignment='center', transform=trans)
+            if i > 0:
+                # Balmer lines
+                trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
+
+
+                
+            #if i == 0:
+                #plt.title('PCA Eigenspectra Phase %d$\pm$%d'%(self.loadPhase, self.phaseWidth), fontsize=18)
+            if i == nshow - 1:
+                plt.xlabel("Wavelength", fontsize=fontsize)
+            #plt.ylabel("Rel Flux", fontsize=16)
+
+            #plt.legend(loc='lower left', fontsize=16)
+        return f
 
 
 
 # Plot reconstructed spectra
 
-    def reconstructSpectra(self, nrecon, nPCAComponents):
+    def reconstructSpectra(self, nrecon, nPCAComponents, snname=None, fontsize=16):
         """
 Reconstructs spectra using the PCA decomposition.
 Arguments:
@@ -797,7 +1048,8 @@ Arguments:
     nPCAComponents -- Iterable list of numbers of PCA components to try using for the reconstruction.
         """
         randomSpec = np.random.randint(0,self.spectraMatrix.shape[0], nrecon)
-        #randomSpec = np.where(self.sneNames == 'sn2004gt')[0]
+        if not snname is None:
+            randomSpec = np.where(self.sneNames == snname)[0]
 
         self.sampleMean = np.nanmean(self.spectraMatrix, axis=0)
         plt.clf()
@@ -807,14 +1059,15 @@ Arguments:
             pcaCoeff = np.dot(self.evecs, (trueSpec - self.sampleMean))
             f = plt.figure(j, figsize=(15,20))
             plt.tick_params(axis='both', which='both', bottom='off', top='off',\
-                            labelbottom='off', right='off', left='off', labelleft='off')
-            plt.title(specName +' PCA Reconstruction',fontsize=16)
+                            labelbottom='off', labelsize=40, right='off', left='off', labelleft='off')
+            #plt.title(specName +' PCA Reconstruction',fontsize=16)
             f.subplots_adjust(hspace=0, top=0.95, bottom=0.1, left=0.12, right=0.93)
 
             for i, n in enumerate(nPCAComponents):
                 ax = f.add_subplot(411 + i)
                 ax.plot(self.wavelengths, trueSpec, '-', c='gray')
                 ax.plot(self.wavelengths, self.sampleMean + (np.dot(pcaCoeff[:n], self.evecs[:n])), '-k')
+                ax.tick_params(axis='both',which='both',labelsize=20)
                 if i < len(nPCAComponents) - 1:
                     plt.tick_params(
                     axis='x',          # changes apply to the x-axis
@@ -823,18 +1076,57 @@ Arguments:
                     top='off',         # ticks along the top edge are off
                     labelbottom='off') # labels along the bottom edge are off
                 ax.set_ylim(-5,5)
-                ax.set_ylabel('flux', fontsize=16)
+                #ax.set_ylabel('flux', fontsize=30)
 
+                if i == 0:
+                    # Balmer lines
+                    trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                    trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+
+                    ax.text(0.02,1.05, "(N PCA, % Var.)", fontsize=fontsize, horizontalalignment='left',\
+                            verticalalignment='center', transform=trans2)
+
+                    ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                    s = r'$\alpha$'
+                    xcord = (6213+6366)/2.0
+                    ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                            verticalalignment='center',transform=trans)
+                    ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                    s = r'$\beta$'
+                    xcord = (4602+4715)/2.0
+                    ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
+                            verticalalignment='center',transform=trans)
+
+
+                    ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                    ax.text((5621+5758)/2.0, 1.05, 'HeI5876', fontsize=fontsize, horizontalalignment='center',\
+                            verticalalignment='center', transform=trans)
+                    ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                    ax.text((6388+6544)/2.0, 1.05, 'HeI6678', fontsize=fontsize, horizontalalignment='center',\
+                            verticalalignment='center', transform=trans)
+                    ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
+                    ax.text((6729+6924)/2.0, 1.05, 'HeI7065', fontsize=fontsize, horizontalalignment='center',\
+                            verticalalignment='center', transform=trans)
+                if i > 0:
+                    # Balmer lines
+                    trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
+                    ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
+                    ax.axvspan(4602, 4715, alpha=0.1, color=self.H_color) #H Beta -9000 km/s to-16000 km/s
+                    ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
+                    ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
+                    ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
                 if n == 0:
                     text = 'mean'
                 elif n == 1:
                     text = "1 component\n"
                     text += r"$(\sigma^2_{tot} = %.2f)$" % self.evals_cs[n - 1]
+                    
                 else:
                     text = "%i components\n" % n
                     text += r"$(\sigma^2_{tot} = %.2f)$" % self.evals_cs[n - 1]
+                    text = '(%i, %.0f'%(n, 100*self.evals_cs[n-1])+'%)'
                 ax.text(0.02, 0.93, text, fontsize=20,ha='left', va='top', transform=ax.transAxes)
-                f.axes[-1].set_xlabel(r'${\rm wavelength\ (\AA)}$',fontsize=16)
+                f.axes[-1].set_xlabel(r'${\rm wavelength\ (\AA)}$',fontsize=30)
         return f
 
 
@@ -855,7 +1147,8 @@ Arguments:
         f = plt.figure(figsize=figsize)
         for i, ev in enumerate(self.evecs[:nshow]):
             plt.subplot(nshow, 1, i + 1)
-            plt.plot(self.wavelengths, self.evals[i] * ev, label="component: %d, %.2f"%(i, self.evals_cs[i]))
+            #plt.plot(self.wavelengths, self.evals[i] * ev, label="component: %d, %.2f"%(i, self.evals_cs[i]))
+            plt.plot(self.wavelengths, ev, label="component: %d, %.2f"%(i, self.evals_cs[i]))
             if i == 0:
                 plt.title('PCA Eigenspectra Phase %d$\pm$%d'%(self.loadPhase, self.phaseWidth), fontsize=18)
             if i == nshow - 1:
