@@ -2,6 +2,8 @@
 # Author: Marc Williamson
 # Date created: 3/01/2018
 from __future__ import division
+#import matplotlib
+#matplotlib.use('Agg')
 import numpy as np
 import scipy
 from scipy.interpolate import interp1d
@@ -105,7 +107,7 @@ def smooth(wvl, flux, cut_vel):
     num = wvl_ln.shape[0]
     binsize = wvl_ln[-1] - wvl_ln[-2]
     f_bin, wln_bin = binspec(wvl_ln, flux, min(wvl_ln), max(wvl_ln), binsize)
-    fbin_ft = np.fft.fft(f_bin)*len(f_bin)
+    fbin_ft = np.fft.fft(f_bin)#*len(f_bin)
     freq = np.fft.fftfreq(num)
     num_upper = np.max(np.where(1.0/freq[1:] * c_kms * binsize > cut_vel))
     num_lower = np.max(np.where(1.0/freq[1:] * c_kms * binsize > vel_toolarge))
@@ -113,16 +115,23 @@ def smooth(wvl, flux, cut_vel):
     powerlaw = lambda x, amp, exp: amp*x**exp
     
     #do linear regression on log data to obtain a guess for powerlaw parameters
+    
+    print num_upper
+#    print nup
+    num_bin = len(f_bin)
     xdat = freq[num_lower:num_upper]
+#    print xdat
     ydat = np.abs(fbin_ft[num_lower:num_upper])
+#    print ydat
     nonzero_mask = xdat!=0            
     slope, intercept, _,_,_ = st.linregress(np.log(xdat[nonzero_mask]), np.log(ydat[nonzero_mask]))
     exp_guess = slope
     amp_guess = np.exp(intercept)
+#    print slope, intercept
     
     #do powerlaw fit
-    xdat = freq[num_lower:num_upper]
-    ydat = np.abs(fbin_ft[num_lower:num_upper])
+    xdat = freq[num_lower:int(num_bin/2)]
+    ydat = np.abs(fbin_ft[num_lower:int(num_bin/2)])
     #exclude data where x=0 because this can cause 1/0 errors if exp < 0
     finite_mask = np.logical_not(xdat==0)
     finite_mask = np.logical_and(finite_mask, np.isfinite(ydat))
@@ -135,7 +144,7 @@ def smooth(wvl, flux, cut_vel):
     
     #filter out frequencies with velocities higher than sep_vel
     smooth_fbin_ft = np.array([fbin_ft[ind] if np.abs(freq[ind])<np.abs(intersect_x) else 0 \
-                               for ind in range(len(freq))])/len(f_bin)
+                               for ind in range(len(freq))])#/len(f_bin)
     #inverse fft on smoothed fluxes
     smooth_fbin_ft_inv = np.real(np.fft.ifft(smooth_fbin_ft))
     
@@ -503,6 +512,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
         IcBLPreSmooth = []
         IcBLPreSmoothIDL = []
         sepvels = []
+        sepvels_no_pad = []
         
         for i in range(len(smoothMask[smoothMask == True])):
             specName = self.sneNames[smoothMask][i]
@@ -517,6 +527,14 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
                 for j in range(s.shape[0]):
                     f.write('        %.4f        %.7f\n'%(s[j,0],s[j,1]+0.0))
                 f.close()
+
+            #spec = self.spectraMatrix[smoothMask][i]
+            #with open('tmp_spec_wvlcut.txt', 'w') as f:
+            #    for j in range(len(self.wavelengths)):
+            #        f.write('        %.4f        %.7f\n'%(self.wavelengths[j], spec[j]))
+            #    f.close()
+
+
             idl('readcol, "tmp_spec.txt", w, f')
             idlCmd = 'SNspecFFTsmooth, w, f, '+str(vel_cut[i])+', f_ft, f_std, sep_vel'
             idl(idlCmd)
@@ -526,6 +544,14 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
             IcBLPreSmoothIDL.append(idl.f)
             sepvels.append(idl.sep_vel)
             
+            #idl('readcol, "tmp_spec_wvlcut.txt", w_pad, f_pad')
+            #idlCmd = 'SNspecFFTsmooth, w_pad, f_pad, '+str(vel_cut[i])+', f_ft_pad, f_std_pad, sep_vel_pad'
+            #idl(idlCmd)
+            #sepvels_no_pad.append(idl.sep_vel_pad)
+
+
+
+
         IcBLPreSmooth = np.array(IcBLPreSmooth)
         IcBLSmoothedMatrix = np.array(IcBLSmoothedMatrix)
         IcBLPreSmoothIDL = np.array(IcBLPreSmoothIDL)
@@ -568,7 +594,7 @@ This method smoothes the IcBL spectra because they are noisier than the other ty
             smoothspecvec.append(smoothSpec)
 
 
-        return f, np.array(sepvels), np.array(smoothspecvec)
+        return f, np.array(sepvels), np.array(smoothspecvec), np.array(sepvels_no_pad)
 
 # Preprocessing replaces 0.0 values with NaN. It also removes the mean of each spectrum
 # and scales each spectrum to have unitary std.
