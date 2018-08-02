@@ -12,6 +12,7 @@ sns.set_color_codes('colorblind')
 import matplotlib.patches as mpatches
 import matplotlib.transforms as transforms
 import matplotlib.gridspec as gridspec
+from matplotlib.colors import LinearSegmentedColormap
 
 import plotly.plotly as ply
 import plotly.graph_objs as go
@@ -21,16 +22,54 @@ import sklearn
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from scipy.spatial import distance
+from sklearn.svm import LinearSVC
 
 import pickle
 
 
+def make_meshgrid(x, y, h=.02):
+    """Create a mesh of points to plot in
+
+    Parameters
+    ----------
+    x: data to base x-axis meshgrid on
+    y: data to base y-axis meshgrid on
+    h: stepsize for meshgrid, optional
+
+    Returns
+    -------
+    xx, yy : ndarray
+    """
+    x_min, x_max = x.min() - 1, x.max() + 1
+    y_min, y_max = y.min() - 1, y.max() + 1
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
+                         np.arange(y_min, y_max, h))
+    return xx, yy
+
+
+def plot_contours(ax, clf, xx, yy, **params):
+    """Plot the decision boundaries for a classifier.
+
+    Parameters
+    ----------
+    ax: matplotlib axes object
+    clf: a classifier
+    xx: meshgrid ndarray
+    yy: meshgrid ndarray
+    params: dictionary of params to pass to contourf, optional
+    """
+    Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    out = ax.contourf(xx, yy, Z,**params)
+    return out
 
 
 class SNePCA:
 
-    def __init__(self, snidset):
+    def __init__(self, snidset, phasemin, phasemax):
         self.snidset = snidset
+        self.phasemin = phasemin
+        self.phasemax = phasemax
 
         self.IIb_color = 'g'
         self.Ib_color = 'mediumorchid'
@@ -47,6 +86,8 @@ class SNePCA:
         self.wavelengths = tmpobj.wavelengths
 
         specMatrix = np.ndarray((nspec, nwvlbins))
+        pcaNames = []
+        pcaPhases = []
         count = 0
         for snname in snnames:
             snobj = self.snidset[snname]
@@ -54,7 +95,10 @@ class SNePCA:
             for phk in phasekeys:
                 specMatrix[count,:] = snobj.data[phk]
                 count = count + 1
-
+                pcaNames.append(snname)
+                pcaPhases.append(phk)
+        self.pcaNames = np.array(pcaNames)
+        self.pcaPhases = np.array(pcaPhases)
         self.specMatrix = specMatrix
 
         return
@@ -62,16 +106,17 @@ class SNePCA:
 
     def getSNeTypeMasks(self):
         snnames = self.snidset.keys()
+        snnames = self.pcaNames
         typeinfo = snid.datasetTypeDict(self.snidset)
         IIblist = typeinfo['IIb']
         Iblist = typeinfo['Ib']
         Iclist = typeinfo['Ic']
         IcBLlist = typeinfo['IcBL']
 
-        IIbmask = np.in1d(self.snidset.keys(), IIblist)
-        Ibmask = np.in1d(self.snidset.keys(), Iblist)
-        Icmask = np.in1d(self.snidset.keys(), Iclist)
-        IcBLmask = np.in1d(self.snidset.keys(), IcBLlist)
+        IIbmask = np.in1d(snnames, IIblist)
+        Ibmask = np.in1d(snnames, Iblist)
+        Icmask = np.in1d(snnames, Iclist)
+        IcBLmask = np.in1d(snnames, IcBLlist)
 
         return IIbmask, Ibmask, Icmask, IcBLmask
 
@@ -347,8 +392,8 @@ class SNePCA:
             print key
             print 'purity radius: ', purity_rad_all
             print '# of SNe within purity ellipse for type '+key+': ',np.sum(purity_msk)
-            names_within_purity_rad = np.array(self.snidset.keys())[purity_msk]
-            correct_names = np.array(self.snidset.keys())[msk]
+            names_within_purity_rad = self.pcaNames[purity_msk]
+            correct_names = self.pcaNames[msk]
             correct_msk = np.isin(names_within_purity_rad, correct_names)
             print '# of correct SNe '+key+': ', np.sum(correct_msk)
         return keys, purity_rad_arr
@@ -364,21 +409,22 @@ class SNePCA:
         col_black = 'rgba(0,0,0,152)'
         col_purp = 'rgba(186,85,211, 0.8)'
 
+        #np.array([nm+'_'+ph for nm,ph in zip(self.pcaNames, self.pcaPhases)])
         traceIIb=go.Scatter(x=pcax[IIbmask], y=pcay[IIbmask], mode='markers',\
                             marker=dict(size=10, line=dict(width=1), color=col_green, opacity=1), \
-                            text=np.array(self.snidset.keys())[IIbmask], name='IIb')
+                            text=np.array([nm+'_'+ph for nm,ph in zip(self.pcaNames, self.pcaPhases)])[IIbmask], name='IIb')
         
         traceIb=go.Scatter(x=pcax[Ibmask], y=pcay[Ibmask], mode='markers',\
                             marker=dict(size=10, line=dict(width=1), color=col_purp, opacity=1), \
-                            text=np.array(self.snidset.keys())[Ibmask], name='Ib')
+                            text=np.array([nm+'_'+ph for nm,ph in zip(self.pcaNames, self.pcaPhases)])[Ibmask], name='Ib')
         
         traceIc=go.Scatter(x=pcax[Icmask], y=pcay[Icmask], mode='markers',\
                             marker=dict(size=10, line=dict(width=1), color=col_red, opacity=1), \
-                            text=np.array(self.snidset.keys())[Icmask], name='Ic')
+                            text=np.array([nm+'_'+ph for nm,ph in zip(self.pcaNames, self.pcaPhases)])[Icmask], name='Ic')
         
         traceIcBL=go.Scatter(x=pcax[IcBLmask], y=pcay[IcBLmask], mode='markers',\
                             marker=dict(size=10, line=dict(width=1), color=col_black, opacity=1), \
-                            text=np.array(self.snidset.keys())[IcBLmask], name='IcBL')
+                            text=np.array([nm+'_'+ph for nm,ph in zip(self.pcaNames, self.pcaPhases)])[IcBLmask], name='IcBL')
         data = [traceIIb, traceIb, traceIc, traceIcBL]
 
 
@@ -405,6 +451,15 @@ class SNePCA:
         layout = go.Layout(autosize=False,
                width=1000,
                height=700,
+               annotations=[
+                   dict(
+                       x=1.05,
+                       y=1.025,
+                       showarrow=False,
+                       text='Phases: [%.2f, %.2f]'%(self.phasemin, self.phasemax),
+                       xref='paper',
+                       yref='paper'
+                   )],
                xaxis=dict(
                    title='PCA%i'%(pcaxind),
                    titlefont=dict(
@@ -479,5 +534,119 @@ class SNePCA:
         fig = go.Figure(data=data, layout=layout)
         return fig
 
+    def cornerplotPCA(self, ncomp, figsize):
+        """
+Plots the 2D marginalizations of the PCA decomposition in a corner plot.
+Arguments:
+    ncomp -- Number of PCA components to include in the 2D marginalization. It is best to ignore the high order components that only capture noise.
+    figsize -- Size of the figure.
+        """
+        red_patch = mpatches.Patch(color=self.Ic_color, label='Ic')
+        cyan_patch = mpatches.Patch(color=self.Ib_color, label='Ib')
+        black_patch = mpatches.Patch(color=self.IcBL_color, label='IcBL Smoothed')
+        green_patch = mpatches.Patch(color=self.IIb_color, label='IIb')
+
+        IIbMask, IbMask, IcMask, IcBLMask = self.getSNeTypeMasks()
+
+        f = plt.figure(figsize=figsize)
+        for i in range(ncomp):
+            for j in range(ncomp):
+                if i > j:
+                    plotNumber = ncomp * i + j + 1
+                    plt.subplot(ncomp, ncomp, plotNumber)
+                    x = self.pcaCoeffMatrix[:,i]
+                    y = self.pcaCoeffMatrix[:,j]
+
+                    #centroids
+                    IIbxmean = np.mean(x[IIbMask])
+                    IIbymean = np.mean(y[IIbMask])
+                    Ibxmean = np.mean(x[IbMask])
+                    Ibymean = np.mean(y[IbMask])
+                    Icxmean = np.mean(x[IcMask])
+                    Icymean = np.mean(y[IcMask])
+                    IcBLxmean = np.mean(x[IcBLMask])
+                    IcBLymean = np.mean(y[IcBLMask])
+                    plt.scatter(IIbymean, IIbxmean, color=self.IIb_color, alpha=0.5, s=100)
+                    plt.scatter(Ibymean, Ibxmean, color=self.Ib_color, alpha=0.5, s=100)
+                    plt.scatter(Icymean, Icxmean, color=self.Ic_color, alpha=0.5, s=100)
+                    plt.scatter(IcBLymean, IcBLxmean, color=self.IcBL_color, alpha=0.5, s=100)
+
+                    plt.scatter(y[IIbMask], x[IIbMask], color=self.IIb_color, alpha=1)
+                    plt.scatter(y[IbMask], x[IbMask], color=self.Ib_color, alpha=1)
+                    plt.scatter(y[IcMask], x[IcMask], color=self.Ic_color, alpha=1)
+                    plt.scatter(y[IcBLMask], x[IcBLMask], color=self.IcBL_color, alpha=1)
+
+                    plt.xlim((np.min(self.pcaCoeffMatrix[:,j])-2,np.max(self.pcaCoeffMatrix[:,j])+2))
+                    plt.ylim((np.min(self.pcaCoeffMatrix[:,i])-2,np.max(self.pcaCoeffMatrix[:,i])+2))
+
+                    if j == 0:
+                        plt.ylabel('PCA Comp %d'%(i+1))
+                    if i == ncomp - 1:
+                        plt.xlabel('PCA Comp %d'%(j+1))
+        plt.subplot(5,5,9)#########################################################
+        plt.axis('off')
+        plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch])
+        #plt.text(-3.0,1.3,'Smoothed IcBL PCA Component 2D Marginalizations (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=16)
+        return f
 
 
+    def gridSearchTSNE(self, perplexity_arr, exaggeration_arr, learning_arr):
+        high_score = 0.0
+        high_perp = None
+        high_exagg = None
+        high_learn = None
+        scores = []
+        highTSNE = None
+        highSVM = None
+        highTSNECoeff = None
+
+        IIbmask, Ibmask, Icmask, IcBLmask = self.getSNeTypeMasks()
+        truth = 1*IIbmask + 2*Ibmask + 3*Icmask + 4*IcBLmask
+        for perp in perplexity_arr:
+            for exagg in exaggeration_arr:
+                for learn in learning_arr:
+                    ts = TSNE(n_components=2, perplexity=perp, early_exaggeration=exagg, learning_rate=learn)
+                    tsCoeff = ts.fit_transform(self.pcaCoeffMatrix)
+                    linsvm = LinearSVC()
+                    linsvm.fit(tsCoeff, truth)
+                    score = linsvm.score(tsCoeff, truth)
+                    scores.append(score)
+                    if score > high_score:
+                        high_score = score
+                        high_perp = perp
+                        high_exagg = exagg
+                        high_learn = learn
+                        highTSNE = ts
+                        highTSNECoeff = tsCoeff
+                        highSVM = linsvm
+
+        #highTSNE = TSNE(n_components=2, perplexity=high_perp, early_exaggeration=high_exagg,\
+        #                learning_rate=high_learn)
+        #highCoeff = highTSNE.fit_transform(self.pcaCoeffMatrix)
+        f = plt.figure(figsize=(10,10))
+        ax = f.gca()
+        ax.scatter(highTSNECoeff[:,0][IIbmask], highTSNECoeff[:,1][IIbmask], c=self.IIb_color)
+        ax.scatter(highTSNECoeff[:,0][Ibmask], highTSNECoeff[:,1][Ibmask], c=self.Ib_color)
+        ax.scatter(highTSNECoeff[:,0][Icmask], highTSNECoeff[:,1][Icmask], c=self.Ic_color)
+        ax.scatter(highTSNECoeff[:,0][IcBLmask], highTSNECoeff[:,1][IcBLmask], c=self.IcBL_color)
+        ax.set_xlabel('TSNE0', fontsize=24)
+        ax.set_ylabel('TSNE1', fontsize=24)
+
+        red_patch = mpatches.Patch(color=self.Ic_color, alpha=1.0, label='Ic')
+        cyan_patch = mpatches.Patch(color=self.Ib_color, alpha=1.0, label='Ib')
+        black_patch = mpatches.Patch(color=self.IcBL_color, alpha=1.0, label='IcBL')
+        green_patch = mpatches.Patch(color=self.IIb_color, alpha=1.0, label='IIb')
+        plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
+                            title='SVM Classification \nSVM Training Score = %.2f'%(high_score), loc='best', fancybox=True, prop={'size':16})
+
+
+        #linsvm = LinearSVC()
+        #linsvm.fit(highCoeff, truth)
+        mesh_x, mesh_y = make_meshgrid(highTSNECoeff[:,0], highTSNECoeff[:,1], h=0.02)
+
+        colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
+        nbins = 4
+        cmap_name = 'mymap'
+        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
+        plot_contours(ax, highSVM, mesh_x, mesh_y, alpha=0.2, cmap=cm)
+        return highTSNE, f, high_score, scores
