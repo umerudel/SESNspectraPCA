@@ -294,7 +294,7 @@ class SNePCA:
 
 
 
-    def pcaPlot(self, pcax, pcay, figsize, purity=False, std_rad=None):
+    def pcaPlot(self, pcax, pcay, figsize, purity=False, std_rad=None, svm=False):
         f = plt.figure(figsize=figsize)
         ax = plt.gca()
         red_patch = mpatches.Patch(color=self.Ic_color, label='Ic')
@@ -346,13 +346,35 @@ class SNePCA:
         #for i, name in enumerate(self.sneNames[IcBLMask]):
         #    plt.text(x[IcBLMask][i], y[IcBLMask][i], name)
 
+        if svm:
+            truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
+            dat = np.column_stack((x,y))
+            linsvm = LinearSVC()
+            linsvm.fit(dat, truth)
+            score = linsvm.score(dat, truth)
+            mesh_x, mesh_y = make_meshgrid(x, y, h=0.02)
+
+            colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
+            nbins = 4
+            cmap_name = 'mymap'
+            cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
+            plot_contours(ax, linsvm, mesh_x, mesh_y, alpha=0.2, cmap=cm)
+
+
+
+
         plt.xlim((np.min(x)-2,np.max(x)+2))
         plt.ylim((np.min(y)-2,np.max(y)+2))
 
         plt.ylabel('PCA Comp %d'%(pcay),fontsize=20)
         plt.xlabel('PCA Comp %d'%(pcax), fontsize=20)
 #        plt.axis('off')
-        plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
+        #plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
+        if svm:
+            plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
+                            title='SVM Classification \nSVM Training Score = %.2f'%(score), loc='best', fancybox=True, prop={'size':16})
+        else:
+            plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         #plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
         plt.minorticks_on()
         plt.tick_params(
@@ -534,7 +556,7 @@ class SNePCA:
         fig = go.Figure(data=data, layout=layout)
         return fig
 
-    def cornerplotPCA(self, ncomp, figsize):
+    def cornerplotPCA(self, ncomp, figsize, svm=False):
         """
 Plots the 2D marginalizations of the PCA decomposition in a corner plot.
 Arguments:
@@ -547,6 +569,9 @@ Arguments:
         green_patch = mpatches.Patch(color=self.IIb_color, label='IIb')
 
         IIbMask, IbMask, IcMask, IcBLMask = self.getSNeTypeMasks()
+        svm_highscore = 0.0
+        svm_x = -1
+        svm_y = -1
 
         f = plt.figure(figsize=figsize)
         for i in range(ncomp):
@@ -571,6 +596,17 @@ Arguments:
                     plt.scatter(Icymean, Icxmean, color=self.Ic_color, alpha=0.5, s=100)
                     plt.scatter(IcBLymean, IcBLxmean, color=self.IcBL_color, alpha=0.5, s=100)
 
+                    if svm:
+                        truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
+                        dat = np.column_stack((y,x))
+                        linsvm = LinearSVC()
+                        linsvm.fit(dat, truth)
+                        score = linsvm.score(dat, truth)
+                        if score > svm_highscore:
+                            svm_highscore = score
+                            svm_x = j+1
+                            svm_y = i+1
+
                     plt.scatter(y[IIbMask], x[IIbMask], color=self.IIb_color, alpha=1)
                     plt.scatter(y[IbMask], x[IbMask], color=self.Ib_color, alpha=1)
                     plt.scatter(y[IcMask], x[IcMask], color=self.Ic_color, alpha=1)
@@ -587,6 +623,8 @@ Arguments:
         plt.axis('off')
         plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch])
         #plt.text(-3.0,1.3,'Smoothed IcBL PCA Component 2D Marginalizations (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=16)
+        if svm:
+            return f, svm_highscore, svm_x, svm_y
         return f
 
 
