@@ -23,6 +23,7 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from scipy.spatial import distance
 from sklearn.svm import LinearSVC
+from sklearn.model_selection import train_test_split
 
 import pickle
 
@@ -350,8 +351,11 @@ class SNePCA:
             truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
             dat = np.column_stack((x,y))
             linsvm = LinearSVC()
-            linsvm.fit(dat, truth)
-            score = linsvm.score(dat, truth)
+
+            trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
+
+            linsvm.fit(trainX, trainY)
+            score = linsvm.score(testX, testY)
             mesh_x, mesh_y = make_meshgrid(x, y, h=0.02)
 
             colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
@@ -372,7 +376,7 @@ class SNePCA:
         #plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         if svm:
             plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
-                            title='SVM Classification \nSVM Training Score = %.2f'%(score), loc='best', fancybox=True, prop={'size':16})
+                            title='SVM Classification \nSVM Testing Score = %.2f'%(score), loc='best', fancybox=True, prop={'size':16})
         else:
             plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         #plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
@@ -599,9 +603,13 @@ Arguments:
                     if svm:
                         truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
                         dat = np.column_stack((y,x))
+
+
+                        trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
+
                         linsvm = LinearSVC()
-                        linsvm.fit(dat, truth)
-                        score = linsvm.score(dat, truth)
+                        linsvm.fit(trainX, trainY)
+                        score = linsvm.score(testX, testY)
                         if score > svm_highscore:
                             svm_highscore = score
                             svm_x = j+1
@@ -645,9 +653,13 @@ Arguments:
                 for learn in learning_arr:
                     ts = TSNE(n_components=2, perplexity=perp, early_exaggeration=exagg, learning_rate=learn)
                     tsCoeff = ts.fit_transform(self.pcaCoeffMatrix)
+
+
+                    trainX, testX, trainY, testY = train_test_split(tsCoeff, truth, test_size=0.3)
+
                     linsvm = LinearSVC()
-                    linsvm.fit(tsCoeff, truth)
-                    score = linsvm.score(tsCoeff, truth)
+                    linsvm.fit(trainX, trainY)
+                    score = linsvm.score(testX, testY)
                     scores.append(score)
                     if score > high_score:
                         high_score = score
@@ -675,7 +687,7 @@ Arguments:
         black_patch = mpatches.Patch(color=self.IcBL_color, alpha=1.0, label='IcBL')
         green_patch = mpatches.Patch(color=self.IIb_color, alpha=1.0, label='IIb')
         plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
-                            title='SVM Classification \nSVM Training Score = %.2f'%(high_score), loc='best', fancybox=True, prop={'size':16})
+                            title='SVM Classification \nSVM Testing Score = %.2f'%(high_score), loc='best', fancybox=True, prop={'size':16})
 
 
         #linsvm = LinearSVC()
