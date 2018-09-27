@@ -27,7 +27,46 @@ from sklearn.model_selection import train_test_split
 
 import pickle
 
+from scipy.io.idl import readsav
+import pylab as pl
 
+def readtemplate(tp):
+    if tp=='IcBL':
+        s = readsav('PCvsTemplates/meanspec%s_1specperSN_15_ft.sav'%tp)
+    else:
+        s = readsav('PCvsTemplates/meanspec%s_1specperSN_15.sav'%tp)
+    #pl.fill_between(s.wlog, s.fmean + s.fsdev, s.fmean - s.fsdev, 
+    #                color = 'k', alpha = 0.5)
+    #pl.plot(s.wlog, s.fmean, label="flattened mean %s phase = 15"%tp
+    #        , lw=2)
+    #pl.ylabel(r"relative flux", fontsize = 18)
+    #pl.xlabel(r"Rest Wavelength $\AA$", fontsize = 18)
+    #pl.legend(fontsize = 18)
+    #pl.show()
+    
+    return s
+def plotPCs(s, tp, c, ax, eig, ewav, sgn):
+    #fig = pl.figure(figsize=(5,5))
+    lines = []
+    for i,e in enumerate(eig):
+       # pl.plot(np.linspace(4000,7000,len(e)), e +0.5*i, label="PC%i"%i)
+        line = ax.plot(ewav, sgn[i]*2*e +5-1.0*i, label="PCA%i"%i)
+        lines.append(line)
+        if i:
+            ax.fill_between(s.wlog, s.fmean + s.fsdev+ 5-1.0*i,
+                            s.fmean - s.fsdev +5-1.0*i, 
+                    color = c, alpha = 0.1)
+        else:
+            ax.fill_between(s.wlog, s.fmean + s.fsdev +5-1.0*i,
+                            s.fmean - s.fsdev +5-1.0*i, 
+                    color = c, alpha = 0.1, label=tp+' Template')
+            
+    ax.set_xlim(4000,7000)
+    ax.set_xlabel("wavelength ($\AA$)",fontsize=26)
+    #ax.ylabel("relative flux")
+    ax.set_ylim(0, 8)
+    #ax.legend(ncol=3, loc='upper right', fontsize=20)
+    return ax, lines
 def make_meshgrid(x, y, h=.02):
     """Create a mesh of points to plot in
 
@@ -292,6 +331,36 @@ class SNePCA:
 
         #f.text(0.07, 2.0/3.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=16)
         return f, hostgrid
+
+
+
+    def meanTemplateEig(self):
+        snIb = readtemplate('Ib')
+        snIc = readtemplate('Ic')
+        snIIb = readtemplate('IIb')
+        snIcBL = readtemplate('IcBL')
+        f, axs = plt.subplots(2,2,figsize=(25,20), sharex=True, sharey=True)
+        plt.subplots_adjust(hspace=0.05, wspace=0.05)
+        axs[0,0], _ = plotPCs(snIIb, 'IIb','g', axs[0,0], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
+        axs[0,1], _ = plotPCs(snIb, 'Ib','mediumorchid', axs[0,1], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
+        axs[1,0], _ = plotPCs(snIcBL, 'IcBL','k', axs[1,0], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
+        axs[1,1], lines = plotPCs(snIc, 'Ic','r', axs[1,1], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
+        #leg = [el[0] for el in lines]
+        #red_patch = mpatches.Patch(color='b', label='Ib Mean Spec', alpha=0.1)
+        #green_patch = mpatches.Patch(color='g', label='IIb Mean Spec', alpha=0.1)
+        #black_patch = mpatches.Patch(color='k', label='IcBL Mean Spec', alpha=0.1)
+        #blue_patch = mpatches.Patch(color='r', label='Ic Mean Spec', alpha=0.1)
+        #leg.append(green_patch)
+        #leg.append(black_patch)
+        #leg.append(red_patch)
+        #leg.append(blue_patch)
+        
+        #plt.figlegend(labels=['PCA1', 'PCA2', 'PCA3', 'PCA4', 'PCA5','IIb Mean Spec', 'IcBL Mean Spec', 'Ib Mean Spec','Ic Mean Spec'],\
+        #              handles=leg, loc=(0.25,.45), ncol=4, fontsize=20)
+        #plt.suptitle('Eigenspectra vs SNe Mean Templates',size=20)
+        #f.savefig('pca_vs_templates.png')
+        #f
+        return f, axs
 
 
 
