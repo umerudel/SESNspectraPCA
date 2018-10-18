@@ -80,8 +80,8 @@ def make_meshgrid(x, y, h=.02):
     -------
     xx, yy : ndarray
     """
-    x_min, x_max = x.min() - 1, x.max() + 1
-    y_min, y_max = y.min() - 1, y.max() + 1
+    x_min, x_max = x.min() - 3, x.max() + 3
+    y_min, y_max = y.min() - 3, y.max() + 3
     xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
                          np.arange(y_min, y_max, h))
     return xx, yy
@@ -167,12 +167,21 @@ class SNePCA:
         self.evecs = pca.components_
         self.evals = pca.explained_variance_ratio_
         self.evals_cs = self.evals.cumsum()
+#        self.pcaCoeffMatrix = np.dot(self.evecs, self.specMatrix.T).T
+#
+#        for i, snname in enumerate(self.snidset.keys()):
+#            snobj = self.snidset[snname]
+#            snobj.pcaCoeffs = self.pcaCoeffMatrix[i,:]
+        return
+
+    def calcPCACoeffs(self):
         self.pcaCoeffMatrix = np.dot(self.evecs, self.specMatrix.T).T
 
         for i, snname in enumerate(self.snidset.keys()):
             snobj = self.snidset[snname]
             snobj.pcaCoeffs = self.pcaCoeffMatrix[i,:]
         return
+
 
     def reconstructSpectrum(self, snname, phasekey, nPCAComponents, fontsize):
         snobj = self.snidset[snname]
@@ -364,9 +373,15 @@ class SNePCA:
 
 
 
-    def pcaPlot(self, pcax, pcay, figsize, purity=False, std_rad=None, svm=False):
-        f = plt.figure(figsize=figsize)
-        ax = plt.gca()
+    def pcaPlot(self, pcax, pcay, figsize, purity=False, std_rad=None, svm=False, fig=None, ax=None, count=1, svmsc=[], ncv=10):
+        if fig is None:
+            f = plt.figure(figsize=figsize)
+        else:
+            f = fig
+        if ax is None:
+            ax = plt.gca()
+        else:
+            ax = ax
         red_patch = mpatches.Patch(color=self.Ic_color, label='Ic')
         cyan_patch = mpatches.Patch(color=self.Ib_color, label='Ib')
         black_patch = mpatches.Patch(color=self.IcBL_color, label='IcBL')
@@ -386,10 +401,10 @@ class SNePCA:
         Icymean = np.mean(y[IcMask])
         IcBLxmean = np.mean(x[IcBLMask])
         IcBLymean = np.mean(y[IcBLMask])
-        plt.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5, s=100, marker='x')
-        plt.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5, s=100, marker='x')
-        plt.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5, s=100, marker='x')
-        plt.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5, s=100, marker='x')
+        ax.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5/count, s=100, marker='x')
+        ax.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5/count, s=100, marker='x')
+        ax.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5/count, s=100, marker='x')
+        ax.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5/count, s=100, marker='x')
 
         if purity:
             ncomp_arr = [pcax, pcay]
@@ -399,20 +414,20 @@ class SNePCA:
             IcBLrad = purity_rad_arr[2]
             Icrad = purity_rad_arr[3]
 
-            ellipse_IIb = mpatches.Ellipse((IIbxmean, IIbymean),2*IIbrad[0],2*IIbrad[1], color=self.IIb_color, alpha=0.1)
-            ellipse_Ib = mpatches.Ellipse((Ibxmean, Ibymean),2*Ibrad[0],2*Ibrad[1], color=self.Ib_color, alpha=0.1)
-            ellipse_Ic = mpatches.Ellipse((Icxmean, Icymean),2*Icrad[0],2*Icrad[1], color=self.Ic_color, alpha=0.1)
-            ellipse_IcBL = mpatches.Ellipse((IcBLxmean, IcBLymean),2*IcBLrad[0],2*IcBLrad[1], color=self.IcBL_color, alpha=0.1)
+            ellipse_IIb = mpatches.Ellipse((IIbxmean, IIbymean),2*IIbrad[0],2*IIbrad[1], color=self.IIb_color, alpha=0.1/count)
+            ellipse_Ib = mpatches.Ellipse((Ibxmean, Ibymean),2*Ibrad[0],2*Ibrad[1], color=self.Ib_color, alpha=0.1/count)
+            ellipse_Ic = mpatches.Ellipse((Icxmean, Icymean),2*Icrad[0],2*Icrad[1], color=self.Ic_color, alpha=0.1/count)
+            ellipse_IcBL = mpatches.Ellipse((IcBLxmean, IcBLymean),2*IcBLrad[0],2*IcBLrad[1], color=self.IcBL_color, alpha=0.1/count)
 
             ax.add_patch(ellipse_IIb)
             ax.add_patch(ellipse_Ib)
             ax.add_patch(ellipse_Ic)
             ax.add_patch(ellipse_IcBL)
 
-        plt.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, alpha=1)
-        plt.scatter(x[IbMask], y[IbMask], color=self.Ib_color, alpha=1)
-        plt.scatter(x[IcMask], y[IcMask], color=self.Ic_color, alpha=1)
-        plt.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, alpha=1)
+        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, alpha=1/count)
+        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, alpha=1/count)
+        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, alpha=1/count)
+        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, alpha=1/count)
         #for i, name in enumerate(self.sneNames[IcBLMask]):
         #    plt.text(x[IcBLMask][i], y[IcBLMask][i], name)
 
@@ -421,6 +436,13 @@ class SNePCA:
             dat = np.column_stack((x,y))
             linsvm = LinearSVC()
 
+            ncv_scores=[]
+            for i in range(ncv):
+                trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
+                linsvm.fit(trainX, trainY)
+                score = linsvm.score(testX, testY)
+                ncv_scores.append(score)
+            
             trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
 
             linsvm.fit(trainX, trainY)
@@ -431,31 +453,33 @@ class SNePCA:
             nbins = 4
             cmap_name = 'mymap'
             cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
-            plot_contours(ax, linsvm, mesh_x, mesh_y, alpha=0.2, cmap=cm)
+            plot_contours(ax, linsvm, mesh_x, mesh_y, alpha=0.2/count, cmap=cm)
+            svmsc.append(score)
 
 
 
 
-        plt.xlim((np.min(x)-2,np.max(x)+2))
-        plt.ylim((np.min(y)-2,np.max(y)+2))
+        ax.set_xlim((np.min(x)-2,np.max(x)+2))
+        ax.set_ylim((np.min(y)-2,np.max(y)+2))
 
-        plt.ylabel('PCA Comp %d'%(pcay),fontsize=20)
-        plt.xlabel('PCA Comp %d'%(pcax), fontsize=20)
+        ax.set_ylabel('PCA Comp %d'%(pcay),fontsize=20)
+        ax.set_xlabel('PCA Comp %d'%(pcax), fontsize=20)
 #        plt.axis('off')
         #plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         if svm:
-            plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
-                            title='SVM Classification \nSVM Testing Score = %.2f'%(score), loc='best', fancybox=True, prop={'size':16})
+            avgsc = np.mean(np.array(ncv_scores))
+            ax.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
+                            title='SVM Classification \nSVM Testing Score = %.2f'%(avgsc), loc='best', fancybox=True, prop={'size':16})
         else:
-            plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
+            ax.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         #plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
-        plt.minorticks_on()
-        plt.tick_params(
+        ax.minorticks_on()
+        ax.tick_params(
                     axis='both',          # changes apply to the x-axis
                     which='both',      # both major and minor ticks are affected
                     labelsize=20) # labels along the bottom edge are off
 
-        return f
+        return f, svmsc
 
 
 
