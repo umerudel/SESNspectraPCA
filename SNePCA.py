@@ -653,7 +653,7 @@ class SNePCA:
         fig = go.Figure(data=data, layout=layout)
         return fig
 
-    def cornerplotPCA(self, ncomp, figsize, svm=False):
+    def cornerplotPCA(self, ncomp, figsize, svm=False, ncv=1):
         """
 Plots the 2D marginalizations of the PCA decomposition in a corner plot.
 Arguments:
@@ -675,6 +675,7 @@ Arguments:
             for j in range(ncomp):
                 if i > j:
                     plotNumber = ncomp * i + j + 1
+                    print plotNumber
                     plt.subplot(ncomp, ncomp, plotNumber)
                     x = self.pcaCoeffMatrix[:,i]
                     y = self.pcaCoeffMatrix[:,j]
@@ -697,12 +698,20 @@ Arguments:
                         truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
                         dat = np.column_stack((y,x))
 
+                        ncv_scores=[]
+                        for cvit in range(ncv):
+                            trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
+                            linsvm = LinearSVC()
+                            linsvm.fit(trainX, trainY)
+                            score = linsvm.score(testX, testY)
+                            ncv_scores.append(score)
+                        score = np.mean(ncv_scores)
 
-                        trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
+                        #trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
 
-                        linsvm = LinearSVC()
-                        linsvm.fit(trainX, trainY)
-                        score = linsvm.score(testX, testY)
+                        #linsvm = LinearSVC()
+                        #linsvm.fit(trainX, trainY)
+                        #score = linsvm.score(testX, testY)
                         if score > svm_highscore:
                             svm_highscore = score
                             svm_x = j+1
