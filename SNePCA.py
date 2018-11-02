@@ -183,21 +183,23 @@ class SNePCA:
         return
 
 
-    def reconstructSpectrum(self, snname, phasekey, nPCAComponents, fontsize):
+    def reconstructSpectrum(self, figsize, snname, phasekey, nPCAComponents, fontsize, leg_fontsize, ylim=(-2,2), dytick=1):
         snobj = self.snidset[snname]
         datasetMean = np.mean(self.specMatrix, axis=0)
         trueSpec = snobj.data[phasekey]
         pcaCoeff = np.dot(self.evecs, (trueSpec - datasetMean))
-        f = plt.figure(figsize=(15,20))
+        f = plt.figure(figsize=figsize)
         plt.tick_params(axis='both', which='both', bottom='off', top='off',\
                             labelbottom='off', labelsize=40, right='off', left='off', labelleft='off')
         f.subplots_adjust(hspace=0, top=0.95, bottom=0.1, left=0.12, right=0.93)
         
         for i, n in enumerate(nPCAComponents):
             ax = f.add_subplot(411 + i)
-            ax.plot(snobj.wavelengths, trueSpec, '-', c='gray')
-            ax.plot(snobj.wavelengths, datasetMean + (np.dot(pcaCoeff[:n], self.evecs[:n])), '-k')
+            ax.plot(snobj.wavelengths, trueSpec, '-', c='gray', label=snname+' True Spectrum')
+            ax.plot(snobj.wavelengths, datasetMean + (np.dot(pcaCoeff[:n], self.evecs[:n])), '-k', label=snname + ' Reconstruction')
             ax.tick_params(axis='both',which='both',labelsize=20)
+            if i == 0:
+                ax.legend(loc='lower left', fontsize=leg_fontsize)
             if i < len(nPCAComponents) - 1:
                 plt.tick_params(
                 axis='x',          # changes apply to the x-axis
@@ -205,15 +207,23 @@ class SNePCA:
                 bottom='off',      # ticks along the bottom edge are off
                 top='off',         # ticks along the top edge are off
                 labelbottom='off') # labels along the bottom edge are off
-            ax.set_ylim(-2,2)
+            ax.set_ylim(ylim)
+            #if i == 0:
+            #    yticks = np.arange(ylim[0], ylim[-1]+dytick, dytick)
+            #else:
+            #    yticks = np.arange(ylim[0] - np.sign(ylim[0])*dytick, ylim[-1], dytick)
+            yticks = np.arange(ylim[0] - np.sign(ylim[0])*dytick, ylim[-1], dytick)
+            ax.set_yticks(yticks)
+            ax.set_yticklabels([])
+            ax.tick_params(axis='y', length=10, direction="inout")
 
             if i == 0:
                 # Balmer lines
                 trans = transforms.blended_transform_factory(ax.transData, ax.transAxes)
                 trans2 = transforms.blended_transform_factory(ax.transAxes, ax.transAxes)
 
-                ax.text(0.02,1.05, "(N PCA, % Var.)", fontsize=fontsize, horizontalalignment='left',\
-                        verticalalignment='center', transform=trans2)
+                #ax.text(0.02,1.03, "(N PCA, %$\sigma^{2}$)", fontsize=fontsize, horizontalalignment='left',\
+                #        verticalalignment='center', transform=trans2)
 
                 ax.axvspan(6213, 6366, alpha=0.1, color=self.H_color) #H alpha -9000 km/s to -16000 km/s
                 s = r'$\alpha$'
@@ -225,15 +235,15 @@ class SNePCA:
                 xcord = (4602+4715)/2.0
                 ax.text(xcord, 1.05, 'H'+s, fontsize=fontsize, horizontalalignment='center',\
                         verticalalignment='center',transform=trans)
-
+                #HeI 5876, 6678, 7065
                 ax.axvspan(5621, 5758, alpha=0.1, color=self.He_color) #HeI5876 -6000 km/s to -13000 km/s
-                ax.text((5621+5758)/2.0, 1.05, 'HeI5876', fontsize=fontsize, horizontalalignment='center',\
+                ax.text((5621+5758)/2.0, 1.05, 'HeI', fontsize=fontsize, horizontalalignment='center',\
                         verticalalignment='center', transform=trans)
                 ax.axvspan(6388, 6544, alpha=0.1, color=self.He_color)
-                ax.text((6388+6544)/2.0, 1.05, 'HeI6678', fontsize=fontsize, horizontalalignment='center',\
+                ax.text((6388+6544)/2.0, 1.05, 'HeI', fontsize=fontsize, horizontalalignment='center',\
                         verticalalignment='center', transform=trans)
                 ax.axvspan(6729, 6924, alpha=0.1, color=self.He_color)
-                ax.text((6729+6924)/2.0, 1.05, 'HeI7065', fontsize=fontsize, horizontalalignment='center',\
+                ax.text((6729+6924)/2.0, 1.05, 'HeI', fontsize=fontsize, horizontalalignment='center',\
                         verticalalignment='center', transform=trans)
  
 
@@ -256,10 +266,15 @@ class SNePCA:
             else:
                 text = "%i components\n" % n
                 text += r"$(\sigma^2_{tot} = %.2f)$" % self.evals_cs[n - 1]
-                text = '(%i, %.0f'%(n, 100*self.evals_cs[n-1])+'%)'
-            ax.text(0.02, 0.93, text, fontsize=20,ha='left', va='top', transform=ax.transAxes)
-            f.axes[-1].set_xlabel(r'${\rm wavelength\ (\AA)}$',fontsize=30)
-            f.text(0.07, 2.0/3.0, 'Relative Flux', verticalalignment='top', rotation='vertical', fontsize=16)
+                #text = '(n PCA = %i,$\sigma^{2}$ =  %.0f'%(n, 100*self.evals_cs[n-1])+'%)'
+            ax.text(0.8, 0.3, 'nPCA = %i'%(n), fontsize=fontsize, ha='left', va='top', transform=ax.transAxes)
+            text = '$\sigma^{2}$ = %.2f'%(100*self.evals_cs[n-1])+'%'
+            #ax.text(0.02, 0.1, text, fontsize=fontsize, ha='left', va='top', transform=ax.transAxes)
+            ax.text(0.8, 0.15, text, fontsize=fontsize,ha='left', va='top', transform=ax.transAxes)
+            f.axes[-1].set_xlabel(r'${\rm wavelength\ (\AA)}$',fontsize=fontsize)
+            f.axes[-1].set_xticklabels(np.arange(4000, 8000, 500),fontsize=fontsize)
+            f.axes[-1].tick_params(axis='x', length=10, direction="inout", labelsize=fontsize)
+            f.text(0.07, 2.0/4.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=fontsize)
         return f
 
 
@@ -343,12 +358,12 @@ class SNePCA:
 
 
 
-    def meanTemplateEig(self):
+    def meanTemplateEig(self, figsize):
         snIb = readtemplate('Ib')
         snIc = readtemplate('Ic')
         snIIb = readtemplate('IIb')
         snIcBL = readtemplate('IcBL')
-        f, axs = plt.subplots(2,2,figsize=(25,20), sharex=True, sharey=True)
+        f, axs = plt.subplots(2,2,figsize=figsize, sharex=True, sharey=True)
         plt.subplots_adjust(hspace=0.05, wspace=0.05)
         axs[0,0], _ = plotPCs(snIIb, 'IIb','g', axs[0,0], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
         axs[0,1], _ = plotPCs(snIb, 'Ib','mediumorchid', axs[0,1], self.evecs[0:5], self.wavelengths,[1,-1,-1,1,-1])
