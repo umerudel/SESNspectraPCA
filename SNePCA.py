@@ -114,7 +114,7 @@ class SNePCA:
         self.IIb_color = 'g'
         self.Ib_color = 'mediumorchid'
         self.Ic_color = 'r'
-        self.IcBL_color = 'k'
+        self.IcBL_color = 'gray'
         self.H_color = 'steelblue'
         self.He_color = 'indianred'
 
@@ -416,10 +416,10 @@ class SNePCA:
         Icymean = np.mean(y[IcMask])
         IcBLxmean = np.mean(x[IcBLMask])
         IcBLymean = np.mean(y[IcBLMask])
-        ax.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5/count, s=100, marker='x')
-        ax.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5/count, s=100, marker='x')
-        ax.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5/count, s=100, marker='x')
-        ax.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5/count, s=100, marker='x')
+        ax.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5/count, s=400, marker='x')
+        ax.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5/count, s=400, marker='x')
+        ax.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5/count, s=400, marker='x')
+        ax.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5/count, s=400, marker='x')
 
         if purity:
             ncomp_arr = [pcax, pcay]
@@ -439,10 +439,10 @@ class SNePCA:
             ax.add_patch(ellipse_Ic)
             ax.add_patch(ellipse_IcBL)
 
-        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, alpha=1/count)
-        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, alpha=1/count)
-        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, alpha=1/count)
-        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, alpha=1/count)
+        #ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',alpha=1/count)
+        #ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',alpha=1/count)
+        #ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',alpha=1/count)
+        #ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',alpha=1/count)
         #for i, name in enumerate(self.sneNames[IcBLMask]):
         #    plt.text(x[IcBLMask][i], y[IcBLMask][i], name)
 
@@ -464,7 +464,8 @@ class SNePCA:
             score = linsvm.score(testX, testY)
             mesh_x, mesh_y = make_meshgrid(x, y, h=0.02)
 
-            colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
+            #colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
+            colors=['g','mediumorchid','r','gray']
             nbins = 4
             cmap_name = 'mymap'
             cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
@@ -473,6 +474,10 @@ class SNePCA:
 
 
 
+        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',s=100,alpha=1/count)
+        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',s=100,alpha=1/count)
+        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',s=100,alpha=1/count)
+        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',s=100,alpha=1/count)
 
         ax.set_xlim((np.min(x)-2,np.max(x)+2))
         ax.set_ylim((np.min(y)-2,np.max(y)+2))
@@ -484,7 +489,7 @@ class SNePCA:
         if svm:
             avgsc = np.mean(np.array(ncv_scores))
             ax.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
-                            title='SVM Classification \nSVM Testing Score = %.2f'%(avgsc), loc='best', fancybox=True, prop={'size':16})
+                            title='SVM Test Score = %.2f'%(avgsc), loc='upper right', ncol=2,fancybox=True, prop={'size':30},fontsize=30)
         else:
             ax.legend(handles=[red_patch, cyan_patch, black_patch, green_patch], fontsize=18)
         #plt.title('PCA Space Separability of IcBL and IIb SNe (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=22)
@@ -507,6 +512,7 @@ class SNePCA:
         purity_rad_arr = []
         for key,msk in zip(keys,masks):
             centroid = np.mean(self.pcaCoeffMatrix[:,ncomp_array][msk], axis=0)
+            std = np.std(self.pcaCoeffMatrix[:,ncomp_array][msk], axis=0)
             print 'centroid', centroid
             dist_from_centroid = np.abs(self.pcaCoeffMatrix[:,ncomp_array][msk] - centroid)
             mean_dist_from_centroid = np.mean(dist_from_centroid, axis=0)
@@ -515,7 +521,8 @@ class SNePCA:
             print 'std dist from centroid: ', std_dist_all_components
             purity_rad_all = mean_dist_from_centroid + std_rad * std_dist_all_components
             print 'purity rad all components: ', purity_rad_all
-            purity_rad_arr.append(purity_rad_all)
+            #purity_rad_arr.append(purity_rad_all)
+            purity_rad_arr.append(std)
 
 
             ellipse_cond = np.sum(np.power((self.pcaCoeffMatrix[:,ncomp_array] - centroid), 2)/\
