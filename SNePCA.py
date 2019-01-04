@@ -183,6 +183,7 @@ class SNePCA:
         return
 
 
+
     def reconstructSpectrum(self, figsize, snname, phasekey, nPCAComponents, fontsize, leg_fontsize, ylim=(-2,2), dytick=1):
         snobj = self.snidset[snname]
         datasetMean = np.mean(self.specMatrix, axis=0)
@@ -195,8 +196,8 @@ class SNePCA:
         
         for i, n in enumerate(nPCAComponents):
             ax = f.add_subplot(411 + i)
-            ax.plot(snobj.wavelengths, trueSpec, '-', c='gray', label=snname+' True Spectrum')
-            ax.plot(snobj.wavelengths, datasetMean + (np.dot(pcaCoeff[:n], self.evecs[:n])), '-k', label=snname + ' Reconstruction')
+            ax.plot(snobj.wavelengths, trueSpec, c='k', linewidth=4.0, alpha=0.5,label=snname+' True Spectrum')
+            ax.plot(snobj.wavelengths, datasetMean + (np.dot(pcaCoeff[:n], self.evecs[:n])), c='b', linestyle='--', linewidth=4.0,label=snname + ' Reconstruction')
             ax.tick_params(axis='both',which='both',labelsize=20)
             if i == 0:
                 ax.legend(loc='lower left', fontsize=leg_fontsize)
