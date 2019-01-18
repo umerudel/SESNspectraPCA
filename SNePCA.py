@@ -127,6 +127,10 @@ class SNePCA:
         self.H_color = 'steelblue'
         self.He_color = 'indianred'
 
+        self.IIb_ellipse_color = 'g'
+        self.Ib_ellipse_color = 'mediumorchid'
+        self.Ic_ellipse_color = 'r'
+        self.IcBL_ellipse_color = 'gray'
         
         nspec = snid.numSpec(self.snidset)
         snnames = self.snidset.keys()
@@ -473,12 +477,12 @@ class SNePCA:
             Icrad = purity_rad_arr[3]
 
             ellipse_IIb = mpatches.Ellipse((IIbxmean, IIbymean),2*IIbrad[0],2*IIbrad[1], \
-                                            color=self.IIb_color, alpha=0.1/alphaell, fill=False, edgecolor=self.IIb_color, linewidth=4.0)
+                                            color=self.IIb_ellipse_color, alpha=0.1/alphaell, fill=False, edgecolor=self.IIb_color, linewidth=4.0)
             ellipse_Ib = mpatches.Ellipse((Ibxmean, Ibymean),2*Ibrad[0],2*Ibrad[1], color=self.Ib_color,\
                                            alpha=0.1/alphaell, fill=False, edgecolor=self.Ib_color, linewidth=4.0)
             ellipse_Ic = mpatches.Ellipse((Icxmean, Icymean),2*Icrad[0],2*Icrad[1], color=self.Ic_color,\
                                            alpha=0.1/alphaell, fill=False, edgecolor=self.Ic_color, linewidth=4.0)
-            ellipse_IcBL = mpatches.Ellipse((IcBLxmean, IcBLymean),2*IcBLrad[0],2*IcBLrad[1], color=self.IcBL_color,\
+            ellipse_IcBL = mpatches.Ellipse((IcBLxmean, IcBLymean),2*IcBLrad[0],2*IcBLrad[1], color=self.IcBL_ellipse_color,\
                                              alpha=0.1/alphaell,fill=False, edgecolor=self.IcBL_color, linewidth=4.0)
             ax.add_patch(ellipse_IIb)
             ax.add_patch(ellipse_Ib)
@@ -490,10 +494,10 @@ class SNePCA:
         ax.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5/alphamean, s=400, marker='x', linewidth=4.0)
         ax.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5/alphamean, s=400, marker='x', linewidth=4.0)
         
-        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',s=100,alpha=1,linewidth=2.0)
-        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',s=100,alpha=1, linewidth=2.0)
-        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',s=100,alpha=1, linewidth=2.0)
-        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',s=100,alpha=1, linewidth=2.0)
+        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',s=200,alpha=1,linewidth=2.0)
+        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
 
         ax.set_xlim((np.min(x)-.2,np.max(x)+.2))
         ax.set_ylim((np.min(y)-.2,np.max(y)+.2))
