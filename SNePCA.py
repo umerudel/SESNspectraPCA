@@ -714,6 +714,8 @@ Arguments:
         svm_x = -1
         svm_y = -1
 
+        means_table = np.zeros((ncomp,ncomp))
+        std_table = np.zeros((ncomp,ncomp))
         f = plt.figure(figsize=figsize)
         for i in range(ncomp):
             for j in range(ncomp):
@@ -721,8 +723,8 @@ Arguments:
                     plotNumber = ncomp * i + j + 1
                     print plotNumber
                     plt.subplot(ncomp, ncomp, plotNumber)
-                    x = self.pcaCoeffMatrix[:,i]
-                    y = self.pcaCoeffMatrix[:,j]
+                    y = self.pcaCoeffMatrix[:,i]
+                    x = self.pcaCoeffMatrix[:,j]
 
                     #centroids
                     IIbxmean = np.mean(x[IIbMask])
@@ -733,14 +735,14 @@ Arguments:
                     Icymean = np.mean(y[IcMask])
                     IcBLxmean = np.mean(x[IcBLMask])
                     IcBLymean = np.mean(y[IcBLMask])
-                    plt.scatter(IIbymean, IIbxmean, color=self.IIb_color, alpha=0.5, s=100)
-                    plt.scatter(Ibymean, Ibxmean, color=self.Ib_color, alpha=0.5, s=100)
-                    plt.scatter(Icymean, Icxmean, color=self.Ic_color, alpha=0.5, s=100)
-                    plt.scatter(IcBLymean, IcBLxmean, color=self.IcBL_color, alpha=0.5, s=100)
+                    plt.scatter(IIbxmean, IIbymean, color=self.IIb_color, alpha=0.5, s=100)
+                    plt.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5, s=100)
+                    plt.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5, s=100)
+                    plt.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5, s=100)
 
                     if svm:
                         truth = 1*IIbMask + 2*IbMask + 3*IcMask + 4*IcBLMask
-                        dat = np.column_stack((y,x))
+                        dat = np.column_stack((x,y))
 
                         ncv_scores=[]
                         for cvit in range(ncv):
@@ -750,6 +752,11 @@ Arguments:
                             score = linsvm.score(testX, testY)
                             ncv_scores.append(score)
                         score = np.mean(ncv_scores)
+                        std = np.std(ncv_scores)
+                        means_table[j,i] = score
+                        means_table[i,j] = score
+                        std_table[j,i] = std
+                        std_table[i,j] = std
 
                         #trainX, testX, trainY, testY = train_test_split(dat, truth, test_size=0.3)
 
@@ -761,10 +768,10 @@ Arguments:
                             svm_x = j+1
                             svm_y = i+1
 
-                    plt.scatter(y[IIbMask], x[IIbMask], color=self.IIb_color, alpha=1)
-                    plt.scatter(y[IbMask], x[IbMask], color=self.Ib_color, alpha=1)
-                    plt.scatter(y[IcMask], x[IcMask], color=self.Ic_color, alpha=1)
-                    plt.scatter(y[IcBLMask], x[IcBLMask], color=self.IcBL_color, alpha=1)
+                    plt.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, alpha=1)
+                    plt.scatter(x[IbMask], y[IbMask], color=self.Ib_color, alpha=1)
+                    plt.scatter(x[IcMask], y[IcMask], color=self.Ic_color, alpha=1)
+                    plt.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, alpha=1)
 
                     plt.xlim((np.min(self.pcaCoeffMatrix[:,j])-2,np.max(self.pcaCoeffMatrix[:,j])+2))
                     plt.ylim((np.min(self.pcaCoeffMatrix[:,i])-2,np.max(self.pcaCoeffMatrix[:,i])+2))
@@ -778,7 +785,7 @@ Arguments:
         plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch])
         #plt.text(-3.0,1.3,'Smoothed IcBL PCA Component 2D Marginalizations (Phase %d$\pm$%d Days)'%(self.loadPhase, self.phaseWidth),fontsize=16)
         if svm:
-            return f, svm_highscore, svm_x, svm_y
+            return f, svm_highscore, svm_x, svm_y, means_table, std_table
         return f
 
 
