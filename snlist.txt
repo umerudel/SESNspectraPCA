@@ -1,3 +1,8 @@
+LSQ14efd.lnw
+sn2012P.lnw
+sn2013df.lnw
+sn2014ad.lnw
+sn2016gkg.lnw
 12au.lnw
 16coi.lnw
 10as.lnw

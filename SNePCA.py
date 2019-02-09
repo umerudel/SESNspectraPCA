@@ -13,6 +13,8 @@ import matplotlib.patches as mpatches
 import matplotlib.transforms as transforms
 import matplotlib.gridspec as gridspec
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.ticker import MultipleLocator
+
 
 import plotly.plotly as ply
 import plotly.graph_objs as go
@@ -96,7 +98,7 @@ def make_meshgrid(x, y, h=.02):
     return xx, yy
 
 
-def plot_contours(ax, clf, xx, yy, **params):
+def plot_contours(ax, clf, xx, yy, alphasvm):
     """Plot the decision boundaries for a classifier.
 
     Parameters
@@ -108,8 +110,25 @@ def plot_contours(ax, clf, xx, yy, **params):
     params: dictionary of params to pass to contourf, optional
     """
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
+
+    IIbZ = len(Z[Z==1])
+    IbZ = len(Z[Z==2])
+    IcZ = len(Z[Z==3])
+    IcBLZ = len(Z[Z==4])
+    colors = []
+    if IIbZ != 0:
+        colors.append(self.IIb_color)
+    if IbZ != 0:
+        colors.append(self.Ib_color)
+    if IcZ != 0:
+        colors.append(self.Ic_color)
+    if IcBLZ != 0:
+        colors.append(self.IcBL_color)
+    nbins = len(colors)
+    cmap_name = 'mymap'
+    cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
     Z = Z.reshape(xx.shape)
-    out = ax.contourf(xx, yy, Z,**params)
+    out = ax.contourf(xx, yy, Z, cmap=cm, alpha=alphasvm)
     return out
 
 
@@ -206,7 +225,7 @@ class SNePCA:
         hostgrid = gridspec.GridSpec(Nhostgrid,1)
         hostgrid.update(hspace=0.2)
 
-        subgrid = gridspec.GridSpecFromSubplotSpec(len(nPCAComponents), 1, subplot_spec=hostgrid[:Nhostgrid-1,0], hspace=0)
+        subgrid = gridspec.GridSpecFromSubplotSpec(len(nPCAComponents), 1, subplot_spec=hostgrid[1:,0], hspace=0)
 
         snobj = self.snidset[snname]
         datasetMean = np.mean(self.specMatrix, axis=0)
@@ -290,24 +309,31 @@ class SNePCA:
                 text = "%i components\n" % n
                 text += r"$(\sigma^2_{tot} = %.2f)$" % self.evals_cs[n - 1]
                 #text = '(n PCA = %i,$\sigma^{2}$ =  %.0f'%(n, 100*self.evals_cs[n-1])+'%)'
-            ax.text(0.77, 0.3, 'nPC = %i'%(n), fontsize=fontsize, ha='left', va='top', transform=ax.transAxes)
-            text = '$\sigma^{2}$ = %.2f'%(100*self.evals_cs[n-1])+'%'
+            ax.text(0.75, 0.3, 'nPC = %i'%(n), fontsize=fontsize, ha='left', va='top', transform=ax.transAxes)
+            reconstruct_percent = np.sum(np.abs(pcaCoeff[:n]))/np.sum(np.abs(pcaCoeff))
+            #text = '$\sigma^{2}$ = %.2f'%(100*self.evals_cs[n-1])+'%'
+            text = '$\sigma^{2}$ = %.2f'%(100*reconstruct_percent)+'%'
             #ax.text(0.02, 0.1, text, fontsize=fontsize, ha='left', va='top', transform=ax.transAxes)
-            ax.text(0.77, 0.15, text, fontsize=fontsize,ha='left', va='top', transform=ax.transAxes)
+            ax.text(0.75, 0.15, text, fontsize=fontsize,ha='left', va='top', transform=ax.transAxes)
             f.axes[-1].set_xlabel(r'${\rm Wavelength\ (\AA)}$',fontsize=fontsize)
             #f.axes[-1].set_xticklabels(np.arange(4000, 8000, 500),fontsize=fontsize-10)
             f.axes[-1].tick_params(axis='x', length=30, direction="inout", labelsize=fontsize-10)
             f.axes[-1].tick_params(axis='x', which='minor', length=15, direction='inout')
-            f.text(0.055, 2.0/3.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=fontsize)
+            f.text(0.055, 1.0/3.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=fontsize)
 
 
-        ax = plt.subplot(hostgrid[-1:,0])
+        ax = plt.subplot(hostgrid[:1,0])
         xcumsum = np.arange(len(self.evals_cs)+1)
         ycumsum = np.hstack((np.array([0]), self.evals_cs))
+        ax.scatter(xcumsum, ycumsum, s=150, c='r')
+        ax.text(5,self.evals_cs[4]-.075,'(5,%.2f)'%(self.evals_cs[4]),fontsize=60,color='r')
         ax.plot(xcumsum,ycumsum, linewidth=4.0,c='k')
-        ax.set_ylabel('Cumulative '+'$\sigma^{2}$', fontsize=fontsize)
+        ax.set_ylabel('Cumulative '+'$\sigma^{2}$', fontsize=65)
         ax.set_xlabel('nPC', fontsize=fontsize)
         ax.tick_params(axis='both',which='both',labelsize=fontsize-10)
+        ax.tick_params(axis='x', length=30, direction='inout')
+        ax.tick_params(axis='x', which='minor', length=15, direction='inout')
+        ax.xaxis.set_minor_locator(MultipleLocator(5))
         return f, hostgrid
 
 
@@ -573,11 +599,39 @@ class SNePCA:
 
                 #colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
                 #colors=['g','mediumorchid','r','gray']
-                colors=[self.IIb_color, self.Ib_color, self.Ic_color, self.IcBL_color]
-                nbins = 4
+                
+                #colors=[self.IIb_color, self.Ib_color, self.Ic_color, self.IcBL_color]
+                #nbins = 4
+                #cmap_name = 'mymap'
+                #cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
+                
+                #plot_contours(ax, linsvm, mesh_x, mesh_y, 0.2/alphasvm)
+
+                Z = linsvm.predict(np.c_[mesh_x.ravel(), mesh_y.ravel()])
+
+                IIbZ = len(Z[Z==1])
+                IbZ = len(Z[Z==2])
+                IcZ = len(Z[Z==3])
+                IcBLZ = len(Z[Z==4])
+                colors = []
+                if IIbZ != 0:
+                    colors.append(self.IIb_color)
+                if IbZ != 0:
+                    colors.append(self.Ib_color)
+                if IcZ != 0:
+                    colors.append(self.Ic_color)
+                if IcBLZ != 0:
+                    colors.append(self.IcBL_color)
+                nbins = len(colors)
                 cmap_name = 'mymap'
                 cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
-                plot_contours(ax, linsvm, mesh_x, mesh_y, alpha=0.2/alphasvm, cmap=cm)
+                Z = Z.reshape(mesh_x.shape)
+                out = ax.contourf(mesh_x, mesh_y, Z, cmap=cm, alpha=0.2/alphasvm)
+            
+
+
+
+
                 svmsc.append(score)
 
 
@@ -902,78 +956,3 @@ Arguments:
         if svm:
             return f, svm_highscore, svm_x, svm_y, means_table, std_table
         return f
-
-
-    def gridSearchTSNE(self, perplexity_arr, exaggeration_arr, learning_arr):
-        high_score = 0.0
-        high_perp = None
-        high_exagg = None
-        high_learn = None
-        scores = []
-        highTSNE = None
-        highSVM = None
-        highTSNECoeff = None
-
-        IIbmask, Ibmask, Icmask, IcBLmask = self.getSNeTypeMasks()
-        truth = 1*IIbmask + 2*Ibmask + 3*Icmask + 4*IcBLmask
-        for perp in perplexity_arr:
-            for exagg in exaggeration_arr:
-                for learn in learning_arr:
-                    ts = TSNE(n_components=2, perplexity=perp, early_exaggeration=exagg, learning_rate=learn)
-                    tsCoeff = ts.fit_transform(self.pcaCoeffMatrix)
-
-
-                    trainX, testX, trainY, testY = train_test_split(tsCoeff, truth, test_size=0.3)
-
-                    linsvm = LinearSVC()
-                    linsvm.fit(trainX, trainY)
-                    score = linsvm.score(testX, testY)
-                    scores.append(score)
-                    if score > high_score:
-                        high_score = score
-                        high_perp = perp
-                        high_exagg = exagg
-                        high_learn = learn
-                        highTSNE = ts
-                        highTSNECoeff = tsCoeff
-                        highSVM = linsvm
-
-        #highTSNE = TSNE(n_components=2, perplexity=high_perp, early_exaggeration=high_exagg,\
-        #                learning_rate=high_learn)
-        #highCoeff = highTSNE.fit_transform(self.pcaCoeffMatrix)
-        f = plt.figure(figsize=(10,10))
-        ax = f.gca()
-        ax.scatter(highTSNECoeff[:,0][IIbmask], highTSNECoeff[:,1][IIbmask], c=self.IIb_color)
-        ax.scatter(highTSNECoeff[:,0][Ibmask], highTSNECoeff[:,1][Ibmask], c=self.Ib_color)
-        ax.scatter(highTSNECoeff[:,0][Icmask], highTSNECoeff[:,1][Icmask], c=self.Ic_color)
-        ax.scatter(highTSNECoeff[:,0][IcBLmask], highTSNECoeff[:,1][IcBLmask], c=self.IcBL_color)
-        ax.set_xlabel('TSNE0', fontsize=24)
-        ax.set_ylabel('TSNE1', fontsize=24)
-
-        red_patch = mpatches.Patch(color=self.Ic_color, alpha=1.0, label='Ic')
-        cyan_patch = mpatches.Patch(color=self.Ib_color, alpha=1.0, label='Ib')
-        black_patch = mpatches.Patch(color=self.IcBL_color, alpha=1.0, label='IcBL')
-        green_patch = mpatches.Patch(color=self.IIb_color, alpha=1.0, label='IIb')
-        plt.legend(handles=[red_patch, cyan_patch, black_patch, green_patch],\
-                            title='SVM Classification \nSVM Testing Score = %.2f'%(high_score), loc='best', fancybox=True, prop={'size':16})
-
-
-        #linsvm = LinearSVC()
-        #linsvm.fit(highCoeff, truth)
-        mesh_x, mesh_y = make_meshgrid(highTSNECoeff[:,0], highTSNECoeff[:,1], h=0.02)
-
-        colors=[(0,1,0),(.8,.59,.58),(1,0,0),(0,0,0)]
-        nbins = 4
-        cmap_name = 'mymap'
-        cm = LinearSegmentedColormap.from_list(cmap_name, colors, N=nbins)
-        plot_contours(ax, highSVM, mesh_x, mesh_y, alpha=0.2, cmap=cm)
-        return highTSNE, f, high_score, scores
-
-
-
-
-
-
-
-
-
