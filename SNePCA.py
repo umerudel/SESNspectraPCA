@@ -229,7 +229,7 @@ class SNePCA:
         hostgrid = gridspec.GridSpec(Nhostgrid,1)
         hostgrid.update(hspace=0.2)
 
-        subgrid = gridspec.GridSpecFromSubplotSpec(len(nPCAComponents), 1, subplot_spec=hostgrid[1:,0], hspace=0)
+        subgrid = gridspec.GridSpecFromSubplotSpec(len(nPCAComponents), 1, subplot_spec=hostgrid[0:,0], hspace=0)
 
         snobj = self.snidset[snname]
         datasetMean = np.mean(self.specMatrix, axis=0)
@@ -323,24 +323,40 @@ class SNePCA:
             #f.axes[-1].set_xticklabels(np.arange(4000, 8000, 500),fontsize=fontsize-10)
             f.axes[-1].tick_params(axis='x', length=30, direction="inout", labelsize=fontsize-10)
             f.axes[-1].tick_params(axis='x', which='minor', length=15, direction='inout')
-            f.text(0.055, 1.0/3.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=fontsize)
+            f.text(0.055, 1.0/2.0, 'Relative Flux', verticalalignment='center', rotation='vertical', fontsize=fontsize)
 
 
-        ax = plt.subplot(hostgrid[:1,0])
+        #ax = plt.subplot(hostgrid[:1,0])
+        #xcumsum = np.arange(len(self.evals_cs)+1)
+        #ycumsum = np.hstack((np.array([0]), self.evals_cs))
+        #ax.scatter(xcumsum, ycumsum, s=150, c='r')
+        #ax.text(5,self.evals_cs[4]-.075,'(5,%.2f)'%(self.evals_cs[4]),fontsize=60,color='r')
+        #ax.plot(xcumsum,ycumsum, linewidth=4.0,c='k')
+        #ax.set_ylabel('Cumulative '+'$\sigma^{2}$', fontsize=65)
+        #ax.set_xlabel('nPC', fontsize=fontsize)
+        #ax.tick_params(axis='both',which='both',labelsize=fontsize-10)
+        #ax.tick_params(axis='x', length=30, direction='inout')
+        #ax.tick_params(axis='x', which='minor', length=15, direction='inout')
+        #ax.xaxis.set_minor_locator(MultipleLocator(5))
+        return f, hostgrid
+
+
+    def pcaCumPlot(self, figsize, fontsize):
+
+        f = plt.figure(figsize=figsize)
+        ax = plt.gca()
         xcumsum = np.arange(len(self.evals_cs)+1)
         ycumsum = np.hstack((np.array([0]), self.evals_cs))
-        ax.scatter(xcumsum, ycumsum, s=150, c='r')
+        plt.plot(xcumsum, ycumsum, linewidth=4.0,c='k')
+        plt.scatter(xcumsum, ycumsum, s=150, c='r')
         ax.text(5,self.evals_cs[4]-.075,'(5,%.2f)'%(self.evals_cs[4]),fontsize=60,color='r')
-        ax.plot(xcumsum,ycumsum, linewidth=4.0,c='k')
         ax.set_ylabel('Cumulative '+'$\sigma^{2}$', fontsize=65)
         ax.set_xlabel('nPC', fontsize=fontsize)
         ax.tick_params(axis='both',which='both',labelsize=fontsize-10)
         ax.tick_params(axis='x', length=30, direction='inout')
         ax.tick_params(axis='x', which='minor', length=15, direction='inout')
         ax.xaxis.set_minor_locator(MultipleLocator(5))
-        return f, hostgrid
-
-
+        return f, ax
 
     def reconstructSpectrum(self, figsize, snname, phasekey, nPCAComponents, fontsize, leg_fontsize, ylim=(-2,2), dytick=1):
         snobj = self.snidset[snname]
@@ -547,7 +563,7 @@ class SNePCA:
 
 
 
-    def pcaPlot(self, pcax, pcay, figsize, alphamean, alphaell, alphasvm, purity=False, excludeSNe=[], std_rad=None, svm=False, fig=None, ax=None, count=1, svmsc=[], ncv=10):
+    def pcaPlot(self, pcax, pcay, figsize, alphamean, alphaell, alphasvm, purity=False, excludeSNe=[], std_rad=None, svm=False, fig=None, ax=None, count=1, svmsc=[], ncv=10, markOutliers=False):
         if fig is None:
             f = plt.figure(figsize=figsize)
         else:
@@ -697,24 +713,32 @@ class SNePCA:
             dist_y = np.power(y[IIbMask] - IIbymean, 2)/np.power(2*IIb_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print 'IIb 2std outliers: ', IIbnames[outliers_mask]
+            IIb_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(IIbnames[outliers_mask])), IIbMask)
+            IIb_no_out_mask = np.logical_and(self.getSNeNameMask(IIbnames[outliers_mask]), IIbMask)
 
             Ibnames = names[IbMask]
             dist_x = np.power(x[IbMask] - Ibxmean, 2)/np.power(2*Ib_rad_x, 2)
             dist_y = np.power(y[IbMask] - Ibymean, 2)/np.power(2*Ib_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print 'Ib 2std outliers: ', Ibnames[outliers_mask]
+            Ib_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(Ibnames[outliers_mask])), IbMask)
+            Ib_no_out_mask = np.logical_and(self.getSNeNameMask(Ibnames[outliers_mask]), IbMask)
            
             Icnames = names[IcMask]
             dist_x = np.power(x[IcMask] - Icxmean, 2)/np.power(2*Ic_rad_x, 2)
             dist_y = np.power(y[IcMask] - Icymean, 2)/np.power(2*Ic_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print 'Ic 2std outliers: ', Icnames[outliers_mask]
+            Ic_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(Icnames[outliers_mask])), IcMask)
+            Ic_no_out_mask = np.logical_and(self.getSNeNameMask(Icnames[outliers_mask]), IcMask)
 
             IcBLnames = names[IcBLMask]
             dist_x = np.power(x[IcBLMask] - IcBLxmean, 2)/np.power(2*IcBL_rad_x, 2)
             dist_y = np.power(y[IcBLMask] - IcBLymean, 2)/np.power(2*IcBL_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print 'IcBL 2std outliers: ', IcBLnames[outliers_mask]
+            IcBL_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(IcBLnames[outliers_mask])), IcBLMask)
+            IcBL_no_out_mask = np.logical_and(self.getSNeNameMask(IcBLnames[outliers_mask]), IcBLMask)
             #ncomp_arr = [pcax, pcay]
             #keys, purity_rad_arr = self.purityEllipse(std_rad, ncomp_arr)
             #IIbrad = purity_rad_arr[0]
@@ -749,11 +773,24 @@ class SNePCA:
         #ax.scatter(Ibxmean, Ibymean, color=self.Ib_color, alpha=0.5/alphamean, s=400, marker='x', linewidth=4.0)
         #ax.scatter(Icxmean, Icymean, color=self.Ic_color, alpha=0.5/alphamean, s=400, marker='x', linewidth=4.0)
         #ax.scatter(IcBLxmean, IcBLymean, color=self.IcBL_color, alpha=0.5/alphamean, s=400, marker='x', linewidth=4.0)
-        
-        ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',s=200,alpha=1,linewidth=2.0)
-        ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
-        ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
-        ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+        if markOutliers:
+
+            ax.scatter(x[IIb_no_out_mask], y[IIb_no_out_mask], color=self.IIb_color, edgecolors='k',s=200,alpha=1,linewidth=2.0)
+            ax.scatter(x[Ib_no_out_mask], y[Ib_no_out_mask], color=self.Ib_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+            ax.scatter(x[Ic_no_out_mask], y[Ic_no_out_mask], color=self.Ic_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+            ax.scatter(x[IcBL_no_out_mask], y[IcBL_no_out_mask], color=self.IcBL_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+
+
+            ax.scatter(x[IIb_out_only_mask], y[IIb_out_only_mask], color=self.IIb_color, edgecolors='k',s=400,alpha=1,linewidth=2.0, marker='*')
+            ax.scatter(x[Ib_out_only_mask], y[Ib_out_only_mask], color=self.Ib_color, edgecolors='k',s=400,alpha=1, linewidth=2.0, marker='*')
+            ax.scatter(x[Ic_out_only_mask], y[Ic_out_only_mask], color=self.Ic_color, edgecolors='k',s=400,alpha=1, linewidth=2.0, marker='*')
+            ax.scatter(x[IcBL_out_only_mask], y[IcBL_out_only_mask], color=self.IcBL_color, edgecolors='k',s=400,alpha=1, linewidth=2.0, marker='*')
+
+        else:
+            ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',s=200,alpha=1,linewidth=2.0)
+            ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+            ax.scatter(x[IcMask], y[IcMask], color=self.Ic_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
+            ax.scatter(x[IcBLMask], y[IcBLMask], color=self.IcBL_color, edgecolors='k',s=200,alpha=1, linewidth=2.0)
 
         ax.set_xlim((np.min(x)-.2,np.max(x)+.2))
         ax.set_ylim((np.min(y)-.2,np.max(y)+.2))
