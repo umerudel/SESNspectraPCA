@@ -13,7 +13,7 @@ If you use data products or the analysis in this code, please <b>acknowledge</b>
 
 Williamson & Modjaz & Bianco (2019):
 
-  	@misc{1903.06815,
+  	@article{1903.06815,
     Author = {Marc Williamson and Maryam Modjaz and Federica Bianco},
     Title = {Optimal Classification and Outlier Detection for Stripped-Envelope Core-Collapse Supernovae},
     Year = {2019},
