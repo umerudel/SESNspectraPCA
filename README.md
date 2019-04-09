@@ -11,9 +11,10 @@ This repository contains the code for running the PCA + SVM spectral analysis on
 In order to rerun the entirety of our analysis, including preprocessing, it is necessary to compile the dataset of SuperNova IDentification (SNID; [Blondin & Tonry 2007](https://iopscience.iop.org/article/10.1086/520494/meta)) Templates used in Williamson et al. (2019). Follow these steps:
 
 1. <b>Download the default SNID library</b> -- The default library of SESNe spectra for SNID can be found on Stephan Blondin's [website](https://people.lam.fr/blondin.stephane/software/snid/)
-2. <b>Add SNID Templates from [nyusngroup](https://github.com/nyusngroup/SESNtemple)</b> 
+2. <b>Add SNID Templates from [nyusngroup](https://github.com/nyusngroup/SESNtemple)</b> -- The research group at New York University (NYU) lead by Professor Maryam Modjaz has published multiple papers presenting new SNID templates of SESNe in the literature, along with making adjustments to the SNID templates in the default SNID library. [SESNtemple](https://github.com/nyusngroup/SESNtemple) contains the new and adjusted SNID templates from [Liu & Modjaz 2014](http://adsabs.harvard.edu/abs/2014arXiv1405.1437L), [Liu et al. 2016](http://adsabs.harvard.edu/abs/2016ApJ...827...90L) and in [Modjaz et al. (2016)](http://adsabs.harvard.edu/abs/2016ApJ...832..108M), that are based on both CfA Data (initially released in Liu & Modjaz 2014) and the rest of literature data (included in Liu et al. 2016 for IIb and Ib, Modjaz et al. 2016 for Ic and Ic-bl). There are also SNID templates for the superluminous SNe presented in [Liu, Modjaz & Bianco (2017)](http://adsabs.harvard.edu/abs/2016arXiv161207321L), based on literature data. Finally, the new SNID templates for SESNe in the literature through August 2018 presented in [Williamson & Modjaz & Bianco (2019)](https://arxiv.org/abs/1903.06815) are included.
+3. <b>Set up SNID Template Directory</b> -- Gather all of the SNID templates from the above two steps in a directory, and consider defining an environmental variable to be the path to your directory.
 
-### Acknowledgement:
+# Acknowledgement:
 
 If you use data products or the analysis in this code, please <b>acknowledge</b> this work by citing in your paper:  Williamson et al. 2019.
 
