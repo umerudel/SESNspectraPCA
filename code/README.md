@@ -2,6 +2,7 @@
 
 This directory contains the code necessary to run the PCA and SVM spectral analysis presented in [Williamson & Modjaz & Bianco (2019)](https://arxiv.org/abs/1903.06815). The files here handle the following:
 
+-<b>/PlotScripts</b> -- Contains scripts for generating each of the figures found in [Williamson & Modjaz & Bianco (2019)](https://arxiv.org/abs/1903.06815), as well as an additional plot comparing the first 5 eigenspectra across all four phases.
 -<b>SNIDsn.py</b> -- Defines the SNIDsn class that is responsible for loading a single SNID .lnw template file.  
 -<b>SNIDdataset.py</b> -- Defines functions for collecting multiple SNIDsn objects into a dictionary, and other functions for manipulating the entire dictionary during the PCA and SVM analysis.
 -<b>SNePCA.py</b> -- Defines a SNePCA class for running the PCA and SVM analysis on a dataset of SNIDsn objects constructed using <b>SNIDdataset.py</b>.
