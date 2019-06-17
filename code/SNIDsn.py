@@ -336,6 +336,7 @@ Arguments:
             print (nknot_mean_list)
         xy_knot_dict = knot_dict(continuum)
         if verbose: print (xy_knot_dict)
+
         wvl, dwbin, dwlog = snid_wvl_axis()
         data_unflat = []
         for nspec_ind in range(self.header['Nspec']):
@@ -351,6 +352,7 @@ Arguments:
                 if verbose: 
                     print ("knot pair")
                     print (pair)
+
                 xknot = pair[0]
                 yknot = pair[1]
                 xknot = np.power(10,xknot)
@@ -360,6 +362,7 @@ Arguments:
                 if verbose:
                     print ("xknot, yknot") 
                     print (xknot, yknot)
+
             spline_x = np.array(spline_x)
             spline_x_wvl = np.array([convert_xknot_wvl(x,1024,wvl) for x in spline_x])
             spline_y = np.array(spline_y)
@@ -369,6 +372,7 @@ Arguments:
                 print (spline_x_wvl)
                 print (spline_y)
                 print (spline_deg)
+
             msk = np.logical_and(wvl >= spline_x_wvl[spl_a_ind], wvl <= spline_x_wvl[spl_b_ind])
             cubicspline = CubicSpline(spline_x_wvl, np.log10(spline_y))
             y = cubicspline(wvl)
@@ -376,6 +380,7 @@ Arguments:
                 print ("spline eval") 
                 print (y)
                 print (np.power(10,y)[1])
+
             unflat = []
             for i in range(len(y)):
                 phkey = self.data.dtype.names[nspec_ind]
@@ -385,6 +390,7 @@ Arguments:
             if verbose:
                 print ("unflat")
                 print (unflat[0:10])
+
             unflat = np.array(unflat)
             zeromsk = np.logical_or(wvl < spline_x_wvl[spl_a_ind], wvl > spline_x_wvl[spl_b_ind])
             unflat[zeromsk] = 0.0

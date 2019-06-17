@@ -23,6 +23,7 @@ def loadDataset(pathdir, snlist):
         f.close()
     for sn in lines:
         print (sn)
+
         filename = sn.strip()
         snname = sn.strip().split('.')[0]
         snidObj = snid.SNIDsn()

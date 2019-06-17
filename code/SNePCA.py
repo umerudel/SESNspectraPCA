@@ -584,6 +584,7 @@ class SNePCA:
 
         #centroids
         nameMask = self.getSNeNameMask(excludeSNe)
+
         print (np.array(self.snidset.keys())[nameMask])
         print ('IIb')
         IIbxmean = np.mean(x[np.logical_and(IIbMask, nameMask)])
@@ -616,6 +617,7 @@ class SNePCA:
         IcBLxmean = np.mean(x[np.logical_and(IcBLMask, nameMask)])
         IcBLymean = np.mean(y[np.logical_and(IcBLMask, nameMask)])
         print ('mean = '),(IcBLxmean, IcBLymean)
+
 
         #ax.scatter(x[IIbMask], y[IIbMask], color=self.IIb_color, edgecolors='k',alpha=1/count)
         #ax.scatter(x[IbMask], y[IbMask], color=self.Ib_color, edgecolors='k',alpha=1/count)
@@ -685,6 +687,7 @@ class SNePCA:
         if purity:
             nameMask = self.getSNeNameMask(excludeSNe)
             print ('rad namemask: '),nameMask
+
             IIb_rad_x = np.std(x[np.logical_and(IIbMask, nameMask)]) * std_rad
             Ib_rad_x = np.std(x[np.logical_and(IbMask, nameMask)]) * std_rad
             Ic_rad_x = np.std(x[np.logical_and(IcMask, nameMask)]) * std_rad
@@ -713,6 +716,7 @@ class SNePCA:
             dist_y = np.power(y[IIbMask] - IIbymean, 2)/np.power(2*IIb_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print ('IIb 2std outliers: '), IIbnames[outliers_mask]
+
             IIb_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(IIbnames[outliers_mask])), IIbMask)
             IIb_no_out_mask = np.logical_and(self.getSNeNameMask(IIbnames[outliers_mask]), IIbMask)
 
@@ -721,6 +725,7 @@ class SNePCA:
             dist_y = np.power(y[IbMask] - Ibymean, 2)/np.power(2*Ib_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print ('Ib 2std outliers: '), Ibnames[outliers_mask]
+
             Ib_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(Ibnames[outliers_mask])), IbMask)
             Ib_no_out_mask = np.logical_and(self.getSNeNameMask(Ibnames[outliers_mask]), IbMask)
            
@@ -729,6 +734,7 @@ class SNePCA:
             dist_y = np.power(y[IcMask] - Icymean, 2)/np.power(2*Ic_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print ('Ic 2std outliers: '), Icnames[outliers_mask]
+
             Ic_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(Icnames[outliers_mask])), IcMask)
             Ic_no_out_mask = np.logical_and(self.getSNeNameMask(Icnames[outliers_mask]), IcMask)
 
@@ -737,6 +743,7 @@ class SNePCA:
             dist_y = np.power(y[IcBLMask] - IcBLymean, 2)/np.power(2*IcBL_rad_y, 2)
             outliers_mask = dist_x + dist_y >= 1
             print ('IcBL 2std outliers: '), IcBLnames[outliers_mask]
+
             IcBL_out_only_mask = np.logical_and(np.logical_not(self.getSNeNameMask(IcBLnames[outliers_mask])), IcBLMask)
             IcBL_no_out_mask = np.logical_and(self.getSNeNameMask(IcBLnames[outliers_mask]), IcBLMask)
             #ncomp_arr = [pcax, pcay]
@@ -836,6 +843,7 @@ class SNePCA:
             print ('std dist from centroid: '), std_dist_all_components
             purity_rad_all = mean_dist_from_centroid + std_rad * std_dist_all_components
             print ('purity rad all components: '), purity_rad_all
+
             #purity_rad_arr.append(purity_rad_all)
             purity_rad_arr.append(std)
 
@@ -852,6 +860,7 @@ class SNePCA:
             correct_names = self.pcaNames[msk]
             correct_msk = np.isin(names_within_purity_rad, correct_names)
             print ('# of correct SNe '+key+': '), np.sum(correct_msk)
+
         return keys, purity_rad_arr
 
 
@@ -901,6 +910,7 @@ class SNePCA:
         IcBLymean = np.mean(pcay[np.logical_and(IcBLmask, nameMask)])
         nameMask = self.getSNeNameMask(excludeSNe)
         print ('rad namemask: '),nameMask
+
         IIbradx = np.std(pcax[np.logical_and(IIbmask, nameMask)]) * std_rad
         Ibradx = np.std(pcax[np.logical_and(Ibmask, nameMask)]) * std_rad
         Icradx = np.std(pcax[np.logical_and(Icmask, nameMask)]) * std_rad
@@ -1022,6 +1032,7 @@ Arguments:
                 if i > j:
                     plotNumber = ncomp * i + j + 1
                     print (plotNumber)
+
                     plt.subplot(ncomp, ncomp, plotNumber)
                     y = self.pcaCoeffMatrix[:,i]
                     x = self.pcaCoeffMatrix[:,j]
