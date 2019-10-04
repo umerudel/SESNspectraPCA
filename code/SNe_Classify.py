@@ -42,7 +42,6 @@ def classify_spectra(ph, bin_length, dphase=5):
         for i in range(1, 5):
             for j in range(i + 1, 6):
                 exclude = ['sn2007uy', 'sn2009er', 'sn2005ek']
-                print(k,i,j)
                 f_all,svmsc,av,std=snidPCA.pcaPlot(i,j,(10,7),alphamean=.5,alphaell=.1,alphasvm=10,purity=True,excludeSNe=exclude,std_rad=1.0,svm=True,count=3,fig=f_all,ax=f_all.axes[l],ncv=50,markOutliers=True)
                 leg = f_all.axes[l].get_legend()
                 tit = leg.get_title()
@@ -60,12 +59,12 @@ def classify_spectra(ph, bin_length, dphase=5):
     return svm_score_dict, f_all
 
 if __name__ == '__main__':
-    phase = sys.argv[1]
+    phase = int(sys.argv[1])
     #fix it
-    assert (phase >= int(phase)), "argument 1 should be an integer"
+    #assert (phase == int(phase)), "argument 1 should be an integer"
     bin_length = int(sys.argv[2])
     if len(sys.argv) > 3:
-	    dphase = int(sys.argv[3])
+        dphase = int(sys.argv[3])
         classify_spectra(phase, bin_length, dphase)
     else:
-	classify_spectra(phase, bin_length)
+        classify_spectra(phase, bin_length)
