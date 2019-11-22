@@ -1,0 +1,364 @@
+sn1998dt_5.dat   z=0.0     ('Ib-norm', '-6 to 14', 0.9994)      Good rlap: 9.95     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.9029857']
+ ['' 'Ib-norm' '2 to 6' '0.06954099']
+ ['' 'Ib-norm' '10 to 14' '0.013882476']
+ ['' 'Ib-norm' '-2 to 2' '0.012213085']
+ ['' 'Ib-norm' '-6 to -2' '0.00078451145']]
+
+sn1999dn_5.dat   z=0.0     ('Ib-norm', '-2 to 14', 1.0)      Good rlap: 10.9     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.7071013']
+ ['' 'Ib-norm' '10 to 14' '0.2728303']
+ ['' 'Ib-norm' '2 to 6' '0.020009778']
+ ['' 'Ib-norm' '-2 to 2' '5.4514796e-05']
+ ['' 'Ic-norm' '18 to 22' '2.2048107e-06']]
+
+sn1999ex_5.dat   z=0.0     ('Ib-norm', '-2 to 14', 1.0)      Good rlap: 9.87     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.99878937']
+ ['' 'Ib-norm' '10 to 14' '0.0005517598']
+ ['' 'Ib-norm' '2 to 6' '0.00046823494']
+ ['' 'Ib-norm' '-2 to 2' '0.00016855092']
+ ['' 'IIb' '2 to 6' '2.1880602e-05']]
+
+sn2005bf_5.dat   z=0.0     ('Ib-norm', '-2 to 14', 0.9999)      Good rlap: 8.56     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.7859903']
+ ['' 'Ib-norm' '2 to 6' '0.21043009']
+ ['' 'Ib-norm' '-2 to 2' '0.003387114']
+ ['' 'Ib-norm' '10 to 14' '0.00014116516']
+ ['' 'Ic-norm' '18 to 22' '3.5467918e-05']]
+
+sn2006ep_5.dat   z=0.0062     ('Ib-norm', '-2 to 14', 1.0)      Good rlap: 9.46     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.75489']
+ ['' 'Ib-norm' '10 to 14' '0.23894718']
+ ['' 'Ib-norm' '2 to 6' '0.0061607445']
+ ['' 'Ib-norm' '-2 to 2' '1.9381916e-06']
+ ['' 'Ic-norm' '14 to 18' '9.941201e-08']]
+
+sn2007ag_5.dat   z=0.1402     ('Ib-norm', '-2 to 14', 1.0)      Good rlap: 6.84     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.9827413']
+ ['' 'Ib-norm' '2 to 6' '0.012068837']
+ ['' 'Ib-norm' '-2 to 2' '0.00431178']
+ ['' 'Ib-norm' '10 to 14' '0.00057334296']
+ ['' 'IIb' '2 to 6' '0.00026409148']]
+
+sn2007C_5.dat   z=0.001     ('Ib-norm', '6 to 10', 0.9972)      Good rlap: 7.25     Unreliable matches
+ [['' 'Ib-norm' '6 to 10' '0.997246']
+ ['' 'Ic-norm' '14 to 18' '0.001304585']
+ ['' 'Ib-norm' '-2 to 2' '0.000715963']
+ ['' 'Ic-norm' '6 to 10' '0.00054425537']
+ ['' 'Ib-norm' '10 to 14' '0.00015028482']]
+
+sn2007kj_5.dat   z=0.0     ('Ib', '-2 to 10', 0.9467)      Low rlap: 5.23     Reliable matches
+ [['' 'Ib-norm' '-2 to 2' '0.6629089']
+ ['' 'IIb' '2 to 6' '0.17627026']
+ ['' 'Ib-norm' '6 to 10' '0.07220882']
+ ['' 'Ib-norm' '2 to 6' '0.035301622']
+ ['' 'Ia-pec' '10 to 14' '0.03373455']]
+
+sn2007Y_5.dat   z=0.1449     ('Ib-norm', '-2 to 10', 1.0)      Good rlap: 8.17     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.8072393']
+ ['' 'Ib-norm' '2 to 6' '0.1817185']
+ ['' 'Ib-norm' '-2 to 2' '0.011037177']
+ ['' 'Ic-norm' '2 to 6' '4.089413e-06']
+ ['' 'IIb' '2 to 6' '8.433638e-07']]
+
+sn2008D_5.dat   z=0.1159     ('Ib-norm', '-2 to 14', 0.9999)      Good rlap: 11.07     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.9061105']
+ ['' 'Ib-norm' '2 to 6' '0.08292491']
+ ['' 'Ib-norm' '10 to 14' '0.009294677']
+ ['' 'Ib-norm' '-2 to 2' '0.0015687069']
+ ['' 'Ic-norm' '18 to 22' '4.939911e-05']]
+
+sn2009er_5.dat   z=0.0     ('Ib-norm', '-6 to 2', 0.5675)      Low rlap: 4.2     Reliable matches
+ [['' 'Ib-norm' '-6 to -2' '0.33198938']
+ ['' 'Ib-norm' '-2 to 2' '0.23547769']
+ ['' 'Ic-broad' '18 to 22' '0.16566913']
+ ['' 'Ia-91T' '-10 to -6' '0.11528217']
+ ['' 'Ib-norm' '2 to 6' '0.07238281']]
+
+sn2009iz_5.dat   z=0.51     ('Ib-norm', '-2 to 14', 1.0)      Good rlap: 12.04     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.81872654']
+ ['' 'Ib-norm' '10 to 14' '0.10237425']
+ ['' 'Ib-norm' '2 to 6' '0.078801475']
+ ['' 'Ib-norm' '-2 to 2' '9.3419316e-05']
+ ['' 'Ic-norm' '18 to 22' '3.756596e-06']]
+
+sn2009jf_5.dat   z=0.0     ('Ib-norm', '-2 to 10', 0.9412)      Good rlap: 6.92     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.47385994']
+ ['' 'Ib-norm' '-2 to 2' '0.3148356']
+ ['' 'Ib-norm' '2 to 6' '0.15251951']
+ ['' 'Ic-norm' '14 to 18' '0.029398046']
+ ['' 'IIb' '2 to 6' '0.022128299']]
+
+sn2012P_5.dat   z=0.0     ('Ib-norm', '6 to 10', 0.3995)      Good rlap: 6.23     Unreliable matches
+ [['' 'Ib-norm' '6 to 10' '0.39945427']
+ ['' 'Ic-norm' '14 to 18' '0.2642297']
+ ['' 'Ic-norm' '6 to 10' '0.18999544']
+ ['' 'Ib-norm' '10 to 14' '0.09253424']
+ ['' 'Ic-norm' '2 to 6' '0.053055905']]
+
+sn2013df_5.dat   z=0.0     ('Ia-norm', '34 to 42', 0.8043)      Low rlap: 5.12     Reliable matches
+ [['' 'Ia-norm' '38 to 42' '0.7096528']
+ ['' 'Ia-norm' '34 to 38' '0.09459826']
+ ['' 'Ia-norm' '18 to 22' '0.09397207']
+ ['' 'Ia-norm' '22 to 26' '0.030811068']
+ ['' 'IIb' '-20 to -18' '0.0154613685']]
+
+sn2016gkg_5.dat   z=0.1543     ('Ic-broad', '-10 to -6', 0.8803)      Low rlap: 0.55     Unreliable matches
+ [['' 'Ic-broad' '-10 to -6' '0.88034374']
+ ['' 'Ia-norm' '-10 to -6' '0.045581624']
+ ['' 'IIb' '-18 to -14' '0.014705111']
+ ['' 'Ia-norm' '-14 to -10' '0.014305982']
+ ['' 'Ib-norm' '-6 to -2' '0.0123769']]
+
+10as_5.dat   z=0.0     ('Ic-norm', '2 to 6', 0.9964)      Good rlap: 6.08     Unreliable matches
+ [['' 'Ic-norm' '2 to 6' '0.99638665']
+ ['' 'Ib-norm' '6 to 10' '0.0035410456']
+ ['' 'IIb' '2 to 6' '3.9340466e-05']
+ ['' 'Ia-norm' '18 to 22' '2.1650747e-05']
+ ['' 'Ic-norm' '6 to 10' '1.0294333e-05']]
+
+11hs_5.dat   z=0.0     ('IIb', '14 to 18', 0.7812)      Good rlap: 6.18     Unreliable matches
+ [['' 'IIb' '14 to 18' '0.7811695']
+ ['' 'IIb' '-14 to -10' '0.10300915']
+ ['' 'IIb' '2 to 6' '0.0737673']
+ ['' 'IIb' '18 to 22' '0.04177797']
+ ['' 'IIb' '-2 to 2' '0.00023215784']]
+
+sn1993J_5.dat   z=0.1555     ('IIb', '2 to 6', 0.9999)      Good rlap: 11.25     Unreliable matches
+ [['' 'IIb' '2 to 6' '0.99989605']
+ ['' 'IIb' '-14 to -10' '9.46204e-05']
+ ['' 'IIb' '-2 to 2' '2.7562894e-06']
+ ['' 'Ic-norm' '2 to 6' '2.4251528e-06']
+ ['' 'Ia-norm' '14 to 18' '1.2748544e-06']]
+
+sn1996cb_5.dat   z=0.4733     ('IIb', '-6 to 22', 0.9995)      Good rlap: 9.77     Reliable matches
+ [['' 'IIb' '2 to 6' '0.9951709']
+ ['' 'IIb' '18 to 22' '0.0026365856']
+ ['' 'IIb' '-6 to -2' '0.0013340507']
+ ['' 'IIb' '-18 to -14' '0.00035235935']
+ ['' 'IIb' '14 to 18' '0.00034514625']]
+
+sn2000H_5.dat   z=0.0     ('IIb', '-2 to 6', 0.8728)      Good rlap: 7.51     Reliable matches
+ [['' 'IIb' '-2 to 2' '0.6047311']
+ ['' 'IIb' '2 to 6' '0.2680401']
+ ['' 'IIb' '-14 to -10' '0.08837482']
+ ['' 'Ia-norm' '10 to 14' '0.012814407']
+ ['' 'IIb' '-10 to -6' '0.010340279']]
+
+sn2006el_5.dat   z=0.0     ('IIb', '2 to 6', 0.7488)      Good rlap: 9.23     Unreliable matches
+ [['' 'IIb' '2 to 6' '0.7488076']
+ ['' 'IIb' '18 to 22' '0.17165397']
+ ['' 'IIb' '14 to 18' '0.041001912']
+ ['' 'IIb' '10 to 14' '0.017915485']
+ ['' 'IIb' '-6 to -2' '0.01404428']]
+
+sn2006T_5.dat   z=0.0     ('IIb', '2 to 22', 0.9987)      Good rlap: 10.53     Reliable matches
+ [['' 'IIb' '2 to 6' '0.8325601']
+ ['' 'IIb' '14 to 18' '0.14864632']
+ ['' 'IIb' '18 to 22' '0.017426535']
+ ['' 'IIb' '6 to 10' '0.000846245']
+ ['' 'IIb' '-14 to -10' '0.0004062311']]
+
+sn2008ax_5.dat   z=0.0021     ('Ib-norm', '-2 to 18', 1.0)      Good rlap: 8.37     Reliable matches
+ [['' 'Ib-norm' '6 to 10' '0.99943775']
+ ['' 'Ib-norm' '10 to 14' '0.0005470487']
+ ['' 'Ib-norm' '2 to 6' '1.3587381e-05']
+ ['' 'IIb' '14 to 18' '7.32735e-07']
+ ['' 'Ib-norm' '-2 to 2' '7.0332965e-07']]
+
+sn2011dh_5.dat   z=0.001     ('IIb', '2 to 22', 0.9973)      Good rlap: 10.59     Reliable matches
+ [['' 'IIb' '2 to 6' '0.760423']
+ ['' 'IIb' '14 to 18' '0.18685882']
+ ['' 'IIb' '18 to 22' '0.049295407']
+ ['' 'IIb' '-14 to -10' '0.0013258882']
+ ['' 'IIb' '6 to 10' '0.00095835887']]
+
+sn2011ei_5.dat   z=0.0     ('Ia-pec', '-14 to -2', 0.9933)      Low rlap: 1.49     Reliable matches
+ [['' 'Ia-pec' '-6 to -2' '0.80533254']
+ ['' 'Ia-91T' '-14 to -10' '0.110570766']
+ ['' 'Ia-91T' '-10 to -6' '0.07739812']
+ ['' 'Ic-broad' '18 to 22' '0.0025396533']
+ ['' 'Ib-norm' '-2 to 2' '0.0013310937']]
+
+sn2011fu_5.dat   z=0.0     ('Ia-norm', '18 to 26', 0.8603)      Low rlap: 3.95     Reliable matches
+ [['' 'Ia-norm' '18 to 22' '0.5624923']
+ ['' 'Ia-norm' '22 to 26' '0.29776806']
+ ['' 'IIb' '2 to 6' '0.06540921']
+ ['' 'IIb' '-14 to -10' '0.060081284']
+ ['' 'IIb' '-18 to -14' '0.009993475']]
+
+13ge_5.dat   z=0.0021     ('Ic-norm', '-2 to 14', 0.9999)      Good rlap: 6.65     Reliable matches
+ [['' 'Ic-norm' '2 to 6' '0.98686767']
+ ['' 'Ic-norm' '6 to 10' '0.005037769']
+ ['' 'Ic-pec' '-2 to 2' '0.0042424374']
+ ['' 'Ic-norm' '10 to 14' '0.002034294']
+ ['' 'Ic-pec' '2 to 6' '0.0016738817']]
+
+15dtg_5.dat   z=0.0     ('Ic-broad', '-6 to 14', 0.9998)      Low rlap: 2.16     Reliable matches
+ [['' 'Ic-broad' '6 to 10' '0.983093']
+ ['' 'Ic-broad' '-2 to 2' '0.015346494']
+ ['' 'Ic-broad' '10 to 14' '0.0008398505']
+ ['' 'Ic-broad' '2 to 6' '0.00024343528']
+ ['' 'Ic-broad' '-6 to -2' '0.0001611927']]
+
+sn1990B_5.dat   z=0.0     ('IIb', '2 to 6', 0.7301)      Low rlap: 3.93     Unreliable matches
+ [['' 'IIb' '2 to 6' '0.7300842']
+ ['' 'Ic-norm' '6 to 10' '0.13903953']
+ ['' 'Ic-norm' '2 to 6' '0.08400537']
+ ['' 'Ib-norm' '10 to 14' '0.03946914']
+ ['' 'Ib-norm' '6 to 10' '0.005104217']]
+
+sn1994I_5.dat   z=0.0103     ('Ic-norm', '2 to 6', 0.6306)      Good rlap: 7.16     Unreliable matches
+ [['' 'Ic-norm' '2 to 6' '0.6305695']
+ ['' 'IIb' '2 to 6' '0.34404787']
+ ['' 'Ic-norm' '10 to 14' '0.020066211']
+ ['' 'Ic-norm' '14 to 18' '0.0017200761']
+ ['' 'Ia-pec' '10 to 14' '0.0015595712']]
+
+sn2004aw_5.dat   z=0.0     ('Ic-pec', '-2 to 6', 0.9919)      Good rlap: 8.14     Reliable matches
+ [['' 'Ic-pec' '2 to 6' '0.9774236']
+ ['' 'Ic-pec' '-2 to 2' '0.008485486']
+ ['' 'Ic-norm' '-2 to 2' '0.005971037']
+ ['' 'Ia-91bg' '10 to 14' '0.004260671']
+ ['' 'Ic-broad' '6 to 10' '0.001374097']]
+
+sn2004fe_5.dat   z=0.0041     ('Ic-norm', '-6 to 14', 1.0)      Good rlap: 6.81     Reliable matches
+ [['' 'Ic-norm' '10 to 14' '0.73441356']
+ ['' 'Ic-norm' '-2 to 2' '0.13850959']
+ ['' 'Ic-norm' '-6 to -2' '0.09158941']
+ ['' 'Ic-norm' '2 to 6' '0.035479642']
+ ['' 'Ib-norm' '-2 to 2' '3.7159016e-06']]
+
+sn2005az_5.dat   z=0.0     ('Ic-norm', '10 to 14', 0.8051)      Good rlap: 6.72     Unreliable matches
+ [['' 'Ic-norm' '10 to 14' '0.8051081']
+ ['' 'Ic-norm' '2 to 6' '0.19113074']
+ ['' 'Ic-norm' '-2 to 2' '0.0016744763']
+ ['' 'Ia-91bg' '2 to 6' '0.0011983251']
+ ['' 'Ic-pec' '2 to 6' '0.00040174706']]
+
+sn2005ek_5.dat   z=0.0031     ('Ic', '-2 to 14', 0.9925)      Low rlap: 5.65     Reliable matches
+ [['' 'Ic-pec' '2 to 6' '0.71380025']
+ ['' 'Ic-broad' '6 to 10' '0.091208674']
+ ['' 'Ic-pec' '-2 to 2' '0.08748996']
+ ['' 'Ic-norm' '2 to 6' '0.05702535']
+ ['' 'Ic-broad' '10 to 14' '0.04300068']]
+
+sn2005mf_5.dat   z=0.0041     ('Ic-norm', '2 to 14', 1.0)      Good rlap: 7.42     Reliable matches
+ [['' 'Ic-norm' '10 to 14' '0.9984596']
+ ['' 'Ic-norm' '2 to 6' '0.00094644324']
+ ['' 'Ic-norm' '6 to 10' '0.0005866274']
+ ['' 'IIb' '2 to 6' '4.0821046e-06']
+ ['' 'Ic-norm' '14 to 18' '2.0245227e-06']]
+
+sn2007gr_5.dat   z=0.0     ('Ic-norm', '-2 to 18', 1.0)      Good rlap: 6.37     Reliable matches
+ [['' 'Ic-norm' '2 to 6' '0.4343996']
+ ['' 'Ic-norm' '10 to 14' '0.4229905']
+ ['' 'Ic-norm' '6 to 10' '0.14240691']
+ ['' 'Ic-norm' '-2 to 2' '0.00017849744']
+ ['' 'Ic-norm' '14 to 18' '2.1639085e-05']]
+
+sn2011bm_5.dat   z=0.0031     ('Ic', '-6 to 14', 0.9999)      Low rlap: 2.57     Reliable matches
+ [['' 'Ic-broad' '6 to 10' '0.5753438']
+ ['' 'Ic-norm' '2 to 6' '0.2592338']
+ ['' 'Ic-norm' '-2 to 2' '0.1634119']
+ ['' 'Ic-norm' '-6 to -2' '0.001117982']
+ ['' 'Ic-norm' '10 to 14' '0.00082501513']]
+
+16coi_5.dat   z=0.0     ('Ia-norm', '-10 to -6', 0.3942)      Low rlap: 1.0     Unreliable matches
+ [['' 'Ia-norm' '-10 to -6' '0.394156']
+ ['' 'Ib-pec' '-6 to -2' '0.30190513']
+ ['' 'Ia-norm' '-14 to -10' '0.1744915']
+ ['' 'Ic-norm' '-6 to -2' '0.07072774']
+ ['' 'Ib-pec' '-10 to -6' '0.049065743']]
+
+sn1998bw_5.dat   z=0.0021     ('Ic-broad', '-10 to 10', 1.0)      Low rlap: 4.19     Reliable matches
+ [['' 'Ic-broad' '-2 to 2' '0.94739825']
+ ['' 'Ic-broad' '2 to 6' '0.05063844']
+ ['' 'Ic-broad' '-10 to -6' '0.0016732254']
+ ['' 'Ic-broad' '6 to 10' '0.0002302486']
+ ['' 'Ic-broad' '-6 to -2' '4.8982565e-05']]
+
+sn2002ap_5.dat   z=0.0     ('Ic-broad', '-10 to 22', 1.0)      Low rlap: 3.49     Reliable matches
+ [['' 'Ic-broad' '6 to 10' '0.99896896']
+ ['' 'Ic-norm' '-2 to 2' '0.0006408518']
+ ['' 'Ic-broad' '2 to 6' '0.0003834175']
+ ['' 'Ic-norm' '-6 to -2' '5.224542e-06']
+ ['' 'Ic-broad' '-2 to 2' '1.3806109e-06']]
+
+sn2003dh_5.dat   z=0.0     ('Ic-broad', '-2 to 14', 1.0)      Low rlap: 1.58     Reliable matches
+ [['' 'Ic-broad' '-2 to 2' '0.99976736']
+ ['' 'Ic-broad' '6 to 10' '0.00021315414']
+ ['' 'Ic-broad' '2 to 6' '1.8756537e-05']
+ ['' 'Ic-broad' '10 to 14' '5.275185e-07']
+ ['' 'Ic-broad' '30 to 34' '1.4030736e-07']]
+
+sn2003jd_5.dat   z=0.0     ('Ic', '-6 to 2', 0.9973)      Good rlap: 9.54     Reliable matches
+ [['' 'Ic-broad' '-2 to 2' '0.98738575']
+ ['' 'Ic-norm' '-6 to -2' '0.009911434']
+ ['' 'Ic-broad' '6 to 10' '0.0025476816']
+ ['' 'Ic-norm' '-10 to -6' '0.00011214375']
+ ['' 'Ic-broad' '2 to 6' '3.692667e-05']]
+
+sn2003lw_5.dat   z=0.0     ('Ic-broad', '-2 to 10', 1.0)      Low rlap: 2.48     Reliable matches
+ [['' 'Ic-broad' '6 to 10' '0.99962974']
+ ['' 'Ic-broad' '2 to 6' '0.00035700263']
+ ['' 'Ic-broad' '-2 to 2' '4.8153847e-06']
+ ['' 'Ia-91bg' '-10 to -6' '3.7206719e-06']
+ ['' 'Ib-norm' '-2 to 2' '2.7998885e-06']]
+
+sn2006aj_5.dat   z=0.0     ('Ic', '-6 to 10', 1.0)      Low rlap: 4.74     Reliable matches
+ [['' 'Ic-norm' '-6 to -2' '0.5255834']
+ ['' 'Ic-broad' '-2 to 2' '0.28149626']
+ ['' 'Ic-broad' '2 to 6' '0.11873739']
+ ['' 'Ic-broad' '6 to 10' '0.0705654']
+ ['' 'Ic-norm' '-2 to 2' '0.0035846287']]
+
+sn2007bg_5.dat   z=0.0     ('Ic-broad', '6 to 10', 0.369)      Low rlap: 1.63     Unreliable matches
+ [['' 'Ic-broad' '6 to 10' '0.36904493']
+ ['' 'Ic-broad' '-10 to -6' '0.34602037']
+ ['' 'IIb' '-18 to -14' '0.13722377']
+ ['' 'Ic-broad' '-2 to 2' '0.09685589']
+ ['' 'Ic-broad' '-6 to -2' '0.027105255']]
+
+sn2007ru_5.dat   z=0.0     ('Ic-norm', '-6 to -2', 0.5371)      Good rlap: 7.25     Unreliable matches
+ [['' 'Ic-norm' '-6 to -2' '0.5371074']
+ ['' 'Ic-broad' '6 to 10' '0.30771092']
+ ['' 'Ic-broad' '-2 to 2' '0.07469293']
+ ['' 'Ic-norm' '-2 to 2' '0.06879539']
+ ['' 'Ic-broad' '2 to 6' '0.011609112']]
+
+sn2009bb_5.dat   z=0.0     ('Ic-broad', '-2 to 2', 0.6413)      Low rlap: 4.5     Unreliable matches
+ [['' 'Ic-broad' '-2 to 2' '0.64127433']
+ ['' 'Ia-norm' '-10 to -6' '0.3320795']
+ ['' 'Ia-91T' '-14 to -10' '0.011642838']
+ ['' 'Ia-norm' '-14 to -10' '0.006830582']
+ ['' 'Ic-norm' '-6 to -2' '0.0063130637']]
+
+sn2010bh_5.dat   z=0.0031     ('Ia-norm', '-10 to -6', 0.8167)      Low rlap: 0.89     Unreliable matches
+ [['' 'Ia-norm' '-10 to -6' '0.8167107']
+ ['' 'Ic-pec' '-6 to -2' '0.17116249']
+ ['' 'Ia-91T' '-14 to -10' '0.011855574']
+ ['' 'Ia-91T' '-10 to -6' '0.00011523201']
+ ['' 'Ia-norm' '-14 to -10' '6.185006e-05']]
+
+sn2012ap_5.dat   z=0.0     ('Ic', '-10 to 2', 1.0)      Good rlap: 6.05     Reliable matches
+ [['' 'Ic-norm' '-6 to -2' '0.9990013']
+ ['' 'Ic-broad' '-2 to 2' '0.0009633894']
+ ['' 'Ic-norm' '-10 to -6' '2.3110753e-05']
+ ['' 'Ic-norm' '-2 to 2' '1.0725423e-05']
+ ['' 'Ib-pec' '-6 to -2' '1.1210808e-06']]
+
+sn2012bz_5.dat   z=0.0072     ('Ia-91bg', '-10 to -6', 0.8883)      Low rlap: 2.72     Unreliable matches
+ [['' 'Ia-91bg' '-10 to -6' '0.888298']
+ ['' 'Ic-broad' '-2 to 2' '0.05679869']
+ ['' 'Ic-broad' '2 to 6' '0.04681999']
+ ['' 'Ia-91bg' '-6 to -2' '0.0072442912']
+ ['' 'Ia-91bg' '-2 to 2' '0.00042378885']]
+
+sn2013dx_5.dat   z=0.0     ('Ic-norm', '-6 to -2', 0.5686)      Low rlap: 2.42     Unreliable matches
+ [['' 'Ic-norm' '-6 to -2' '0.5685684']
+ ['' 'Ic-broad' '6 to 10' '0.2748201']
+ ['' 'Ic-broad' '2 to 6' '0.09131436']
+ ['' 'Ic-broad' '-2 to 2' '0.04957787']
+ ['' 'Ic-norm' '-2 to 2' '0.014718499']]
+
