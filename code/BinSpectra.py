@@ -186,14 +186,14 @@ def binspec_right(wvl, flux, uncer, bin_factor):
 
 # Drops bins from left.
 
-def mybinspec(wvl, flux, uncer, wbin):
+def mybinspec(wvl, flux, uncer, bin_length):
     data_dtype = flux.dtype
     flux = flux.astype('float64')
     phase_key = list(uncer.keys())[0]
     uncer = uncer[phase_key]
-    #wbin = (wvl[1] - wvl[0])
-    #nwbin = obl * binbfactor
-    bin_factor = float(wbin) / owbin
+    owbin = (np.log(wvl[1]) - np.log(wvl[0]))
+    bin_factor = float(bin_length) / owbin
+    #bin_factor = float(wbin) / owbin
     wvl_log = np.log(wvl)
     number_of_newbins = float(len(wvl_log)) / bin_factor
     if float(number_of_newbins).is_integer():
@@ -255,3 +255,65 @@ def lowres_dataset(dataset, wbin):
         lowres_dataset_dict.update(lowres_dataset_dict)
         sn = sn + 1
     return lowres_dataset_dict#, bin_factor
+
+
+
+def random_noise_dataset(dataset):
+    dataset_value_list = list(dataset.values())
+    dataset_key_list = list(dataset.keys())
+    random_dataset_dict = {}
+    #bin_factor = rebin_spec(wbin)
+    sn = 0
+    while sn < len(dataset_value_list):
+        dataset_value_list[sn].random_noise_spec()
+        random_dataset_dict[dataset_key_list[sn]] = dataset_value_list[sn]
+        random_dataset_dict.update(random_dataset_dict)
+        sn = sn + 1
+    return random_dataset_dict
+
+
+
+def GetTypes(dataset):
+    keys = list(dataset.keys())
+    type_list = []
+    type_dict = {}
+    for i in range(0, len(keys)):
+        types = dataset[keys[i]].header['TypeStr']
+        type_list.append(types)
+        type_dict[keys[i]] = types
+    return type_dict
+
+
+def ArangeSNeType(dataset):
+    keys = list(dataset.keys())
+    type_Ib_norm_list = []
+    type_Ib_pec_list = []
+    type_IIb_list = []
+    type_Ic_list = []
+    type_Ic_norm_list = []
+    type_Ic_pec_list = []
+    type_Ic_broad_list = []
+    type_dict = {}
+    for i in range(0, len(keys)):
+        if dataset[keys[i]].header['TypeStr'] == 'Ib-norm':
+            type_Ib_norm_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'Ib-pec':
+            type_Ib_pec_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'IIb':
+            type_IIb_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'Ic':
+            type_Ic_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'Ic-norm':
+            type_Ic_norm_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'Ic-pec':
+            type_Ic_pec_list.append(keys[i])
+        elif dataset[keys[i]].header['TypeStr'] == 'Ic-broad':
+            type_Ic_broad_list.append(keys[i])
+    type_dict['Ib-norm'] = type_Ib_norm_list
+    type_dict['Ib-pec'] = type_Ib_pec_list
+    type_dict['IIb'] = type_IIb_list
+    type_dict['Ic'] = type_Ic_list
+    type_dict['Ic-norm'] = type_Ic_norm_list
+    type_dict['Ic-pec'] = type_Ic_pec_list
+    type_dict['Ic-broad'] = type_Ic_broad_list
+    return type_dict
