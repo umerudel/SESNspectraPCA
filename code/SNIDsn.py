@@ -791,7 +791,7 @@ class SNIDsn:
         return
     
 
-    def rebin_spec(self, bin_factor):
+    def rebin_spec(self, bin_length):
         """
         Parameters
         ----------
@@ -806,8 +806,8 @@ class SNIDsn:
         flux = self.data.astype('float64')
         phase_key = list(self.smooth_uncertainty.keys())[0]
         uncer = self.smooth_uncertainty[phase_key]
-        #owbin = (wvl[1] - wvl[0])
-        #bin_factor = float(bin_length) / owbin
+        owbin = (np.log(wvl[1]) - np.log(wvl[0]))
+        bin_factor = float(bin_length) / owbin
         wvl_log = np.log(wvl)
         number_of_newbins = float(len(wvl_log)) / bin_factor
         if float(number_of_newbins).is_integer():
@@ -860,6 +860,17 @@ class SNIDsn:
         return 
     
 
+    def random_noise_spec(self):
+        data_dtype = self.data.dtype
+        wvl = self.wavelengths
+        flux = self.data
+        uncer = self.smooth_uncertainty
+        self.wavelengths = wvl
+        self.data = np.random.randn(len(wvl)).astype(data_dtype)
+        self.smooth_uncertainty = uncer
+        return
+    
+    
 
     def save(self, path='./', protocol=2):
         """
